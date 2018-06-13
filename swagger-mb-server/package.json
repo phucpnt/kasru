@@ -1,0 +1,34 @@
+{
+  "name": "swagger-mb-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "NODE_ENV=development DIR_SPEC=../../specs nodemon --inspect --watch src --watch server.js server.js",
+    "server:run": "NODE_ENV=production DIR_SPEC=../../specs node server.js"
+  },
+  "author": "Phuc PNT. <pn.truongphuc@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "dredd": "^5.1.8",
+    "express": "^4.16.3",
+    "express-http-proxy": "^1.2.0",
+    "fs-extra": "^6.0.1",
+    "lodash": "^4.17.10",
+    "mountebank": "^1.14.1",
+    "mountebank-helper": "^1.2.1",
+    "shortid": "^2.2.8",
+    "swagger-client": "^3.8.6",
+    "swagger-parser": "^4.1.0",
+    "swaggerbank": "*",
+    "unfetch": "^3.0.0",
+    "yaml": "^1.0.0-beta.6",
+    "yaml-js": "^0.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  }
+}
