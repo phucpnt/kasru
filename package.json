@@ -1,0 +1,16 @@
+{
+	"name": "swagger-mb",
+	"version": "0.0.1",
+	"scripts": {
+		"bootstrap": "lerna bootstrap",
+		"build": "lerna run build --stream",
+		"start": "lerna run server:run --stream",
+		"dev": "lerna run start --stream"
+	},
+	"devDependencies": {
+		"lerna": "^2.9.0"
+	},
+	"dependencies": {
+		"immutable": "^3.8.2"
+	}
+}

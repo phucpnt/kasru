@@ -1,0 +1,12 @@
+# This docker compose use for using directly the docker image
+
+version: '3'
+
+services: 
+  swmb:
+    image: phucpnt/swmb:latest
+    volumes: 
+      - ./specs:/proj/specs
+    ports: 
+      - 7777:3003
+

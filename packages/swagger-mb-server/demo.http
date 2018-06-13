@@ -1,0 +1,14 @@
+GET http://127.0.0.1:3003/swagger-spec/sentifi-intelligence/mb-exec
+
+###
+POST http://127.0.0.1:3003/swagger-spec/sentifi-intelligence/generate-mock-responses
+Content-Type: application/json
+
+{
+  "responsePath": {
+    "route": "/topic/{topicId}",
+    "verb": "get",
+    "status": "200"
+  }
+}
+

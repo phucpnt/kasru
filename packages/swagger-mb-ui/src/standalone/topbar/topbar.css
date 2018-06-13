@@ -1,0 +1,91 @@
+#swagger-editor .topbar {
+  background-color: #f1f1f1;
+  width: 100%;
+}
+#swagger-editor .topbar-wrapper {
+  height: 60px;
+  display: flex;
+}
+#swagger-editor .topbar-wrapper > * {
+  margin-left: 1em;
+  margin-right: 1em;
+  align-self: center;
+  color: #333;
+  font-size: 1.0em;
+  font-weight: 500;
+}
+#swagger-editor .topbar-wrapper .menu-item {
+  cursor: pointer;
+  font-size: 14px;
+}
+#swagger-editor .topbar-wrapper .menu-item::after {
+  content: '▼';
+  margin-left: 6px;
+  font-size: 8px;
+}
+#swagger-editor .topbar-logo__img {
+  cursor: pointer;
+}
+#swagger-editor .topbar-logo__title {
+  display: inline-block;
+  color: #333;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.1em 1.2em 0 0.5em;
+}
+#swagger-editor .dd-menu.long {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 800px;
+}
+#swagger-editor .dd-menu.long .dd-menu-items {
+  width: 600px;
+}
+#swagger-editor .dd-menu.long .dd-menu-items .dd-items-left {
+  display: flex;
+  flex-direction: column;
+  max-height: 500px;
+  flex-wrap: wrap;
+  margin: 1.7em 0 0!important;
+}
+#swagger-editor .dd-menu.long .dd-menu-items .dd-items-left li {
+  flex: 22%;
+}
+#swagger-editor .dd-menu.long .long-menu-message {
+  padding: 1.5em;
+  color: #ccc;
+  cursor: pointer;
+}
+#swagger-editor .dd-menu .dd-menu-items {
+  margin: 1.1em 0 0 0 !important;
+}
+#swagger-editor .dd-menu .dd-menu-items ol,
+#swagger-editor .dd-menu .dd-menu-items ul {
+  border-radius: 0 0 4px 4px;
+}
+#swagger-editor .dd-menu .dd-menu-items ol li:last-of-type:hover,
+#swagger-editor .dd-menu .dd-menu-items ul li:last-of-type:hover {
+  border-radius: 0 0 4px 4px;
+}
+#swagger-editor .modal {
+  padding: 1em;
+  position: relative;
+  min-height: 12em;
+}
+#swagger-editor .modal div.container {
+  height: 100%;
+}
+#swagger-editor .modal .right {
+  margin: 1em;
+  text-align: right;
+}
+#swagger-editor .modal button {
+  margin-left: 1em;
+}
+#swagger-editor .modal-message {
+  margin: 1.75em 2em;
+  font-size: 1.1em;
+}
+#swagger-editor .modal-message p {
+  line-height: 1.3;
+}
