@@ -7,6 +7,7 @@ const http = require("http");
 const fs = require("fs-extra");
 
 const routeSwaggerSpec = require("./src/swagger-spec");
+const routeConnect = require('./src/connect');
 const { DIR_SPEC } = require("./global-var");
 
 const PORT = process.env.NODE_PORT || 3003;
@@ -36,6 +37,8 @@ app.get("/", function(req, res) {
 });
 
 app.use("/swagger-spec", routeSwaggerSpec);
+app.use('/connect', routeConnect);
+
 
 app.use("/mb/:port(\\d+)", (req, res, next) => {
   const port = req.params.port;
