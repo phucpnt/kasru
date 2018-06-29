@@ -137,7 +137,7 @@ export default function wrapOperations(Operations, system) {
             fluid
             panels={panels}
             exclusive={false}
-            defaultActiveIndex={[0]}
+            defaultActiveIndex={panels.map((v, k) => k)}
           />
         </div>
       );
