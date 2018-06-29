@@ -1,5 +1,5 @@
 import { List, Map, fromJS } from "immutable";
-import { validate } from "../utils/validate";
+import { validate, pickSpecPath } from "../utils/validate";
 import { stat } from "fs";
 
 const ATP = "SWMB/TEST"; // action type prefix
@@ -33,7 +33,7 @@ export default function statePlugins({ getSystem }) {
         },
         update(
           uniqueId,
-          testSpec = {
+          spec = {
             urn: null,
             method: null,
             params: null,
@@ -44,9 +44,21 @@ export default function statePlugins({ getSystem }) {
             strategy: null
           }
         ) {
+          const testSpec = fromJS(spec);
+          const system = getSystem();
+          const matched = pickSpecPath(system.specSelectors.specJson().toJS(), {
+            method: testSpec.get("method"),
+            urn: testSpec.get("urn")
+          });
+
           return {
             type: "SWMB/TEST/UPDATE",
-            payload: { uniqueId, updates: testSpec }
+            payload: {
+              uniqueId,
+              updates: !matched ? testSpec: testSpec
+                .set("specPath", matched.specPath)
+                .set("specParams", fromJS(matched.params)),
+            }
           };
         },
         remove(uniqueId) {
@@ -71,9 +83,19 @@ export default function statePlugins({ getSystem }) {
                 ...testCase.toJS()
               },
               system.specSelectors.specJson().toJS()
-            ).then(result => {
-              system.testActions.run_success(uniqueId, result);
-            });
+            )
+              .then(result => {
+                system.testActions.run_success(uniqueId, result);
+              })
+              .catch(err => {
+                console.error("validate error", err.toString());
+                system.testActions.run_success(uniqueId, {
+                  testResult: {
+                    errors: [err.toString()],
+                    errorText: err.toString()
+                  }
+                });
+              });
           };
         },
         run_success(uniqueId, result) {

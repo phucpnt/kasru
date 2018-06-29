@@ -90,17 +90,17 @@ export default function definePlugin({ getSystem }) {
                   tests: upstreamTest
                 })
                   .then(() => {
-                    lf.getItem(`swmb/${specName}`).then(data => {
+                    return lf.getItem(`swmb/${specName}`).then(data => {
                       return lf.setItem(`swmb/${specName}`, {
                         ...data,
                         specContent: upstreamSpec,
                         stubContent: upstreamStub,
-                        tests: upstreamTest || data.tests,
+                        tests: upstreamTest || data && data.tests ? data.tests: [],
                       });
                     });
                   })
                   .then(() => {
-                    system.swmbActions.rehydrate(specName);
+                    return system.swmbActions.rehydrate(specName);
                   });
               });
           };

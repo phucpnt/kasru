@@ -19,7 +19,7 @@ const { migrateStub } = require("./migrate-stub");
 
 const YAML_EXT = ".yaml";
 const STUB_EXT = ".stub.json";
-const SECRET_EXT = ".secret.json";
+const SECRET_EXT = ".cred.json";
 
 route.use((req, res, next) => {
   res.setHeader(
@@ -317,6 +317,7 @@ route.post("/:specName/mb-exec-next", (req, res) => {
     mbPort = existedMBPorts[sessionId][0];
   } else {
     mbPort = pickNewPort();
+    existedMBPorts[sessionId] = [mbPort];
   }
 
   const api = new SwaggerBank.API(YAML.load(specContent));
