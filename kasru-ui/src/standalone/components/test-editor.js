@@ -20,11 +20,18 @@ import {
   SortableElement,
   SortableHandle
 } from "react-sortable-hoc";
+import debounce from "lodash/debounce";
 
 import { validate } from "../utils/validate";
 import JsonEditor from "./json-editor";
+import { fromJS } from "immutable";
 
-const methodOptions = [{ key: "get", text: "GET", value: "get" }];
+const methodOptions = [
+  { key: "get", text: "GET", value: "get" },
+  { key: "post", text: "POST", value: "post" },
+  { key: "put", text: "PUT", value: "put" },
+  { key: "delete", text: "DELETE", value: "delete" }
+];
 const testOptions = [
   {
     key: "response_follow_spec",
@@ -143,6 +150,7 @@ export default class TestEditor extends Component {
                 key={uniqueId}
                 test={test}
                 testId={uniqueId}
+                testActions={this.props.testActions}
                 onRunTest={this.onRunTest.bind(this, uniqueId)}
                 onToggleWatch={this.onToggleWatch.bind(this, uniqueId)}
                 lastRunResult={this.props.testSelectors.getTestResult(uniqueId)}
@@ -174,6 +182,8 @@ class TestCase extends Component {
       expanded: false,
       ...props.test.toJS()
     };
+
+    this.onChange = debounce(this.onChange.bind(this), 1000);
   }
 
   onExpanded(expanded) {
@@ -184,14 +194,40 @@ class TestCase extends Component {
     }
   }
 
+  onChange() {
+    this.props.testActions.update(
+      this.state.uniqueId,
+      this.props.test.merge({
+        urn: this.state.urn,
+        method: this.state.method,
+        params: this.state.params,
+        headers: this.state.headers,
+        body: this.state.body
+      })
+    );
+  }
+
   handleChange = (e, { name, value }) => {
+    console.info(name, value);
     this.setState({ [name]: value });
+    this.onChange();
+  };
+
+  handleChangeReqPayload = (name, value) => {
+    try {
+      console.info(name, value);
+      this.setState({ [name]: JSON.parse(value) });
+      this.onChange();
+    } catch (err) {}
   };
 
   onRunTest = () => {
     this.props.onRunTest({
       urn: this.state.urn,
-      method: this.state.method
+      method: this.state.method,
+      params: this.state.params,
+      headers: this.state.headers,
+      body: this.state.body
     });
   };
 
@@ -211,7 +247,7 @@ class TestCase extends Component {
   renderTestResultIcon(lastRunResult) {
     if (!lastRunResult) return null;
 
-    if (lastRunResult.get("result") === true) {
+    if (lastRunResult.getIn(["result", "testResult"]) === true) {
       return <Icon name="check circle" color="green" />;
     } else {
       return <Icon name="exclamation circle" color="red" />;
@@ -224,7 +260,11 @@ class TestCase extends Component {
     const time = lastRunResult.get("time");
     const result = lastRunResult.get("result");
     return (
-      <Segment color={result.get("testResult") === true ? "green" : "red"}>
+      <Segment
+        style={{ marginTop: "2em" }}
+        basic
+        color={result.get("testResult") === true ? "green" : "red"}
+      >
         <Header as="h4">Last test result:</Header>
         <div>
           {result.get("testResult") === true && (
@@ -248,9 +288,11 @@ class TestCase extends Component {
               <Segment basic>
                 <pre>{result.getIn(["testResult", "errorText"])}</pre>
               </Segment>
-              <Header as="h3">Request result</Header>
+              <Header as="h3">Server last return</Header>
               <Segment>
-                <Header as="h4">Headers</Header>
+                <Header as="h4">
+                  Headers <small>(view as json)</small>
+                </Header>
                 <JsonEditor
                   readOnly
                   editorOptions={{
@@ -264,7 +306,7 @@ class TestCase extends Component {
                 />
               </Segment>
               <Segment>
-                <Header as="h4">Response</Header>
+                <Header as="h4">Body</Header>
                 <JsonEditor
                   readOnly
                   editorOptions={{
@@ -284,7 +326,18 @@ class TestCase extends Component {
     );
   }
 
-  renderParamsHeaders(uniqueId) {
+  renderParamsHeaders(test) {
+    const uniqueId = test.get("uniqueId");
+
+    const queryParams = test
+      .get("specParams", [])
+      .filter(p => p.get("in") === "query");
+    let paramJson = queryParams.reduce((accum, p) => {
+      return accum.set(p.get("name"), p.get("default", null));
+    }, fromJS({}));
+    paramJson = paramJson.merge(test.get("params", fromJS({})));
+    const body = test.get('body');
+
     const panes = [
       {
         menuItem: <Menu.Item key="params">Params</Menu.Item>,
@@ -296,6 +349,8 @@ class TestCase extends Component {
                 maxLines: 10,
                 autoScrollEditorIntoView: true
               }}
+              value={JSON.stringify(paramJson, null, 2)}
+              onChange={this.handleChangeReqPayload.bind(this, "params")}
               name={`test-unit-params-${uniqueId}`}
             />
           </Tab.Pane>
@@ -311,14 +366,40 @@ class TestCase extends Component {
                 maxLines: 10,
                 autoScrollEditorIntoView: true
               }}
-              name={`test-unit-params-${uniqueId}`}
+              onChange={this.handleChangeReqPayload.bind(this, "headers")}
+              name={`test-unit-headers-${uniqueId}`}
+            />
+          </Tab.Pane>
+        )
+      },
+      {
+        menuItem: (
+          <Menu.Item key="body" disabled={['post', 'put'].indexOf(test.get('method', 'get')) === -1 }>
+            Body
+          </Menu.Item>
+        ),
+        render: () => (
+          <Tab.Pane>
+            <JsonEditor
+              editorOptions={{
+                minLines: 2,
+                maxLines: 30,
+                autoScrollEditorIntoView: true
+              }}
+              onChange={this.handleChangeReqPayload.bind(this, "body")}
+              value={JSON.stringify(body, null, 2)}
+              name={`test-unit-body-${uniqueId}`}
             />
           </Tab.Pane>
         )
       }
     ];
 
-    return <div style={{marginBottom: '0.5em'}}><Tab panes={panes} /></div>;
+    return (
+      <div style={{ marginBottom: "1em" }}>
+        <Tab menu={{ secondary: true, pointing: true }} panes={panes} />
+      </div>
+    );
   }
 
   render() {
@@ -379,7 +460,10 @@ class TestCase extends Component {
               ) : (
                 <Icon name="caret right" />
               )}
-              <Header.Content>{[method, urn].join(" ")} </Header.Content>
+              <Header.Content>
+                {[method.toUpperCase(), urn].join(" ")}
+                <Header.Subheader>~ {test.get("specPath")}</Header.Subheader>
+              </Header.Content>
             </Header>
           </Card.Header>
         </Card.Content>
@@ -401,19 +485,15 @@ class TestCase extends Component {
                   basic
                   floating
                   options={methodOptions}
+                  name="method"
                   value={(method || "get").toLowerCase()}
+                  onChange={this.handleChange}
                 />
                 <input />
-                <Button
-                  toggle
-                  active={displayParams}
-                  onClick={this.toggleParamsEdit}
-                >
-                  Params + Headers
-                </Button>
               </Form.Input>
-              {displayParams && this.renderParamsHeaders(uniqueId)}
+              {this.renderParamsHeaders(test)}
               <Form.Select
+                label="Test strategy"
                 options={testOptions}
                 placeholder="Strategy"
                 defaultValue={"response_follow_spec"}

@@ -45,11 +45,16 @@ export default function definePlugin({ getSystem }) {
         notifyBatchReport() {
           return system => {
             const report = system.testScheduleSelectors.report();
-            const failNum = report.count(item => item.get("result").testResult !== true);
+            const failNum = report.count(
+              item => item.get("result").testResult !== true
+            );
             const passNum = report.size - failNum;
-            new Notification(`${failNum} Fail | ${passNum} Pass (Total: ${report.size})`, {
-              icon: failNum === 0 ? "/test-pass.png" : "/test-fail.png"
-            });
+            new Notification(
+              `${failNum} Fail | ${passNum} Pass (Total: ${report.size})`,
+              {
+                icon: failNum === 0 ? "/test-pass.png" : "/test-fail.png"
+              }
+            );
           };
         },
         watchAll() {}
@@ -89,17 +94,23 @@ export default function definePlugin({ getSystem }) {
           return (testId, result) => {
             oAction(testId, result);
             const testCase = system.testSelectors.getById(testId);
-            const nextScheduledTest = system.testScheduleSelectors.first()
-            const isInBatch = nextScheduledTest && nextScheduledTest.get("id") === testId;
+            const nextScheduledTest = system.testScheduleSelectors.first();
+            const isInBatch =
+              nextScheduledTest && nextScheduledTest.get("id") === testId;
             if (!isInBatch) {
               if (Notification.permission === "granted") {
                 new Notification(
-                  `Test ${result.testResult === true ? "PASS" : "FAIL"} - ${testCase.get(
-                    "urn"
-                  )}`,
+                  `${
+                    result.testResult === true ? "PASS" : "FAIL"
+                  } - ${testCase
+                    .get("method", "get")
+                    .toUpperCase()} ${testCase.get("urn")}`,
                   {
-                    icon: result.testResult === true ? "/test-pass.png" : "/test-fail.png",
-                    requireInteraction: true,
+                    icon:
+                      result.testResult === true
+                        ? "/test-pass.png"
+                        : "/test-fail.png",
+                    requireInteraction: true
                   }
                 );
               }
@@ -108,11 +119,10 @@ export default function definePlugin({ getSystem }) {
               system.testScheduleActions.remove(testId);
               system.testScheduleActions.next();
               const remainTest = system.testScheduleSelectors.first();
-              if(!remainTest){
+              if (!remainTest) {
                 system.testScheduleActions.notifyBatchReport();
               }
             }
-
           };
         }
       }

@@ -4,6 +4,7 @@ import trimEnd from "lodash/trimEnd";
 import trimStart from "lodash/trimStart";
 import clone from "lodash/cloneDeep";
 import { RegExifyURL } from "./urlManager";
+import qs from "query-string";
 
 export default function validateData(schema, data) {
   const ajv = new Ajv({ allErrors: true });
@@ -26,10 +27,38 @@ export default function validateData(schema, data) {
   }
 }
 
-export function validate(request, spec) {
-  const { host, urn, method, headers, httpStatus = "200" } = request;
+export function pickSpecPath(spec, { method, urn }) {
+  const regexPaths = Object.keys(spec.paths)
+    .filter(path => spec.paths[path][method.toLowerCase()])
+    .map(path => {
+      const availParams = [].concat(
+        spec.paths[path].parameters || [],
+        spec.paths[path][method.toLowerCase()].parameters || []
+      );
+      const regexPathStr = RegExifyURL(path, availParams);
+      return {
+        regex: new RegExp(regexPathStr),
+        specPath: path,
+        params: availParams,
+        specRes: clone(spec.paths[path][method.toLowerCase()])
+      };
+    });
 
-  console.info("validate...", request, spec);
+  const match = regexPaths.find(rp => rp.regex.test(urn));
+
+  return match;
+}
+
+export function validate(request, spec) {
+  const {
+    host,
+    urn,
+    method,
+    headers,
+    httpStatus = "200",
+    body,
+    params
+  } = request;
 
   let $chain = Promise.all(
     Object.keys(spec.paths)
@@ -66,9 +95,15 @@ export function validate(request, spec) {
   return $chain.then(regexifyPaths => {
     const matchPathSchema = regexifyPaths.find(item => item.pattern.test(urn));
 
-    return fetch([trimEnd(host, "/"), trimStart(urn, "/")].join("/"), {
+    let url = [trimEnd(host, "/"), trimStart(urn, "/")].join("/");
+    if (Object.keys(params || {}).length > 0) {
+      url += "?" + qs.stringify(params);
+    }
+
+    return fetch(url, {
       headers,
-      method
+      method,
+      body: JSON.stringify(body)
     })
       .then(response =>
         Promise.all([
@@ -87,7 +122,7 @@ export function validate(request, spec) {
           clone(matchPathSchema.schema.spec.schema)
         );
         const testResult = validateData(schema, result);
-        console.info({ testResult, body: result, headers: headersObj, status });
+        // console.info({ testResult, body: result, headers: headersObj, status });
         return { testResult, bodyJson: result, headers: headersObj, status };
       });
   });
