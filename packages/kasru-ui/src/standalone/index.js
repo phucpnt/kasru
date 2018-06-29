@@ -1,6 +1,7 @@
 import Swagger from "swagger-client";
 import parseUrl from "url-parse";
-import { List, fromJS, Map, OrderedMap } from "immutable";
+import { createSelector } from "reselect";
+import { List, Map } from 'immutable';
 
 import TopbarPlugin from "./topbar";
 
@@ -11,12 +12,12 @@ import TestLayout from "./test-layout";
 import makeEditor from "./components/stub-editor-next";
 import TestEditor from "./components/test-editor";
 import { API_HOST } from "./global-vars";
-import stateSWMB from "./state/swmb";
 import swmb from "./state/swmb";
 import stub from "./state/stub";
 import test from "./state/test";
-import testSchedule from './state/test-schedule';
+import testSchedule from "./state/test-schedule";
 import wrapInfo from "./components/make-info-login-form";
+import wrapOperations from "./components/wrap-operation-views";
 
 let StubEditor = makeEditor({
   editorPluginsToRun: ["gutterClick", "pasteHandler"]
@@ -28,9 +29,32 @@ const burstCache = () =>
     .slice(2);
 
 let StandaloneLayoutPlugin = function({ getSystem }) {
+  const tickets = createSelector(
+      state => getSystem().specSelectors.operationsWithRootInherited(),
+      ops => {
+        const tickets = ops
+          .map(op => op.getIn(["operation", "x-tickets"], "others"))
+          .flatten()
+          .toSet()
+          .toList();
+        return tickets;
+      }
+    );
+  const opsByTickets= createSelector(
+      tickets,
+      state => getSystem().specSelectors.operationsWithRootInherited(),
+      (tickets, ops) => {
+        return tickets.reduce((accum, url) => {
+          const foundOps = ops.filter(op => op.getIn(['operation', 'x-tickets']).contains(url));
+          return accum.set(url, accum.get(url, new List()).concat(foundOps));
+        }, new Map());
+      }
+    );
+
   return {
     wrapComponents: {
       info: wrapInfo,
+      operations: wrapOperations
     },
     components: {
       StandaloneLayout,
@@ -185,7 +209,9 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           },
           mockUrn(state) {
             return state.get("mockUrn", undefined);
-          }
+          },
+          tickets,
+          opsByTickets,
         },
         wrapActions: {
           updateJsonSpec: (origAction, system) => (...args) => {
@@ -215,7 +241,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           }
         }
       },
-      stub: stub({ getSystem }),
+      stub: stub({ getSystem })
     },
     fn: {
       execute: function(req) {
@@ -241,7 +267,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
 };
 
 export default function() {
-  return [TopbarPlugin, StandaloneLayoutPlugin, test, testSchedule, swmb ];
+  return [TopbarPlugin, StandaloneLayoutPlugin, test, testSchedule, swmb];
 }
 
 function getReducers() {

@@ -193,12 +193,14 @@ export default class StandaloneLayout extends React.Component {
   };
 
   render() {
+    console.info(this.props.getComponents());
     const mode = this.props.uiSelectors.currentView();
     const specName = this.props.specSelectors.specName();
 
     const { getComponent } = this.props;
     const UnitSpecScreen = getComponent("UnitSpecScreen", true);
     const Topbar = getComponent("Topbar", true);
+
 
     return (
       <BrowserRouter>
