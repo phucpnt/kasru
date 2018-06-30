@@ -235,6 +235,7 @@ export default class StandaloneLayout extends React.Component {
 export class UnitSpecScreen extends Component {
   componentDidMount() {
     const { specName, mode } = this.props.match.params;
+    this.props.uiActions.handleLocationChange({location: this.props.location, match: this.props.match});
     this.props.uiActions.switchEditorView(mode);
     this.props.specActions.fetchRemoteContent(specName);
   }
