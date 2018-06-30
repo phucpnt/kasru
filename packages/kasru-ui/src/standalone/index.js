@@ -1,7 +1,8 @@
 import Swagger from "swagger-client";
 import parseUrl from "url-parse";
 import { createSelector } from "reselect";
-import { List, Map } from 'immutable';
+import { List, Map, fromJS } from "immutable";
+import qs from "query-string";
 
 import TopbarPlugin from "./topbar";
 
@@ -30,26 +31,28 @@ const burstCache = () =>
 
 let StandaloneLayoutPlugin = function({ getSystem }) {
   const tickets = createSelector(
-      state => getSystem().specSelectors.operationsWithRootInherited(),
-      ops => {
-        const tickets = ops
-          .map(op => op.getIn(["operation", "x-tickets"], "others"))
-          .flatten()
-          .toSet()
-          .toList();
-        return tickets;
-      }
-    );
-  const opsByTickets= createSelector(
-      tickets,
-      state => getSystem().specSelectors.operationsWithRootInherited(),
-      (tickets, ops) => {
-        return tickets.reduce((accum, url) => {
-          const foundOps = ops.filter(op => op.getIn(['operation', 'x-tickets']).contains(url));
-          return accum.set(url, accum.get(url, new List()).concat(foundOps));
-        }, new Map());
-      }
-    );
+    state => getSystem().specSelectors.operationsWithRootInherited(),
+    ops => {
+      const tickets = ops
+        .map(op => op.getIn(["operation", "x-tickets"], "no tickets assigned"))
+        .flatten()
+        .toSet()
+        .toList();
+      return tickets;
+    }
+  );
+  const opsByTickets = createSelector(
+    tickets,
+    state => getSystem().specSelectors.operationsWithRootInherited(),
+    (tickets, ops) => {
+      return tickets.reduce((accum, url) => {
+        const foundOps = ops.filter(op =>
+          op.getIn(["operation", "x-tickets"]).contains(url)
+        );
+        return accum.set(url, accum.get(url, new List()).concat(foundOps));
+      }, new Map());
+    }
+  );
 
   return {
     wrapComponents: {
@@ -211,7 +214,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
             return state.get("mockUrn", undefined);
           },
           tickets,
-          opsByTickets,
+          opsByTickets
         },
         wrapActions: {
           updateJsonSpec: (origAction, system) => (...args) => {
@@ -228,16 +231,65 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               type: "SWMB/EDITOR_SWITCH_VIEW",
               payload: { viewName }
             };
+          },
+          handleLocationChange({ location, match }) {
+            const { search } = location;
+
+            if (match.params.mode === "spec") {
+              const query = qs.parse(search);
+              return {
+                type: "SWMB/UI/SPEC_URL_CHANGE",
+                payload: {
+                  specName: match.params.specName,
+                  query,
+                  match,
+                  location
+                }
+              };
+            }
           }
         },
         reducers: {
           "SWMB/EDITOR_SWITCH_VIEW": (state, action) => {
             return state.set("editorView", action.payload.viewName);
+          },
+          "SWMB/UI/SPEC_URL_CHANGE": (state, action) => {
+            const { specName, query, match, location } = action.payload;
+            return state.merge({
+              location,
+              match,
+              specName,
+              ops: fromJS({
+                view: query.opsView,
+                filters: { tickets: query.tickets.split(",") }
+              })
+            });
           }
         },
         selectors: {
           currentView(state) {
             return state.get("editorView", "spec");
+          },
+          ops(state) {
+            return state.get(
+              "ops",
+              fromJS({
+                view: "tickets",
+                filters: { tickets: [] }
+              })
+            );
+          },
+          url(state) {
+            return {
+              match: state.get("match"),
+              location: state.get("location")
+            };
+          },
+          urlSpec(state, query) {
+            const curPath = state.getIn(["match", "url"]);
+            let url = window.location.origin + '/#' + curPath;
+            url += '?' + qs.stringify(query)
+            return url;
           }
         }
       },

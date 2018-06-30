@@ -9,6 +9,8 @@ import {
   Menu
 } from "semantic-ui-react";
 import { List } from "immutable";
+import { matchPath } from "react-router-dom";
+import Clipboard from "react-clipboard.js";
 
 const SWAGGER2_OPERATION_METHODS = [
   "get",
@@ -23,11 +25,19 @@ const SWAGGER2_OPERATION_METHODS = [
 const OAS3_OPERATION_METHODS = SWAGGER2_OPERATION_METHODS.concat(["trace"]);
 
 class ByTicketsOperationView extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      filters: []
-    };
+  state = {
+    filters: []
+  };
+
+  componentDidMount() {
+    const ops = this.props.uiSelectors.ops();
+    const tickets = this.props.specSelectors.tickets();
+    const ticketIds = ops.getIn(["filters", "tickets"]);
+    this.setState({
+      filters: tickets
+        .filter(url => ticketIds.indexOf(url.split("/").slice(-1)[0]) > -1)
+        .toArray()
+    });
   }
 
   handleFilter = (evt, { name, value }) => {
@@ -38,7 +48,6 @@ class ByTicketsOperationView extends Component {
   getPanels(opsByTickets) {
     const { specSelectors } = this.props;
     const { filters } = this.state;
-    console.info(filters);
     const OperationContainer = this.props.getComponent(
       "OperationContainer",
       true
@@ -61,6 +70,16 @@ class ByTicketsOperationView extends Component {
                 >
                   <Icon name="external" />
                 </a>
+                <Clipboard
+                  data-clipboard-text={this.props.uiSelectors.urlSpec({
+                    opsView: "tickets",
+                    tickets: tag
+                  })}
+                  className="ui small button"
+                  button-title="Copy to clipboard"
+                >
+                  <Icon name="linkify" /> Copy link
+                </Clipboard>
               </Header>
             ),
             key: `title-${tag}`
@@ -129,6 +148,7 @@ class ByTicketsOperationView extends Component {
               }))
               .toArray()}
             name="filters"
+            value={this.state.filters}
             onChange={this.handleFilter}
           />
         </Form.Field>
@@ -148,12 +168,15 @@ export default function wrapOperations(Operations, system) {
   class MultipleOperationsView extends Component {
     constructor(props) {
       super(props);
+      const ops = this.props.uiSelectors.ops();
       this.state = {
-        opView: "tickets"
+        opView: ops.get("view")
       };
     }
 
-    handleMenuClick = (e, { name }) => this.setState({ opView: name });
+    handleMenuClick = (e, { id }) => {
+      this.setState({ opView: id });
+    };
 
     render() {
       const activeItem = this.state.opView;
@@ -162,12 +185,16 @@ export default function wrapOperations(Operations, system) {
         <div>
           <Menu color="green" pointing size="large" widths={2}>
             <Menu.Item
-              name="tickets"
+              key="tickets"
+              id="tickets"
+              name="JIRA tickets"
               active={activeItem === "tickets"}
               onClick={this.handleMenuClick}
             />
             <Menu.Item
-              name="tags"
+              key="tags"
+              id="tags"
+              name="Tags"
               active={activeItem === "tags"}
               onClick={this.handleMenuClick}
             />
