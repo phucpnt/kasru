@@ -9,6 +9,8 @@ import TopbarPlugin from "./topbar";
 import StandaloneLayout, { UnitSpecScreen } from "./standalone-layout";
 import StubEditorLayout from "./stub-layout";
 import TestLayout from "./test-layout";
+import SpecLayout from "./spec-layout";
+import CustomBaseLayout from "./components/custom-base-layout";
 
 import makeEditor from "./components/stub-editor-next";
 import TestEditor from "./components/test-editor";
@@ -65,7 +67,9 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       StubEditor,
       TestLayout,
       TestEditor,
-      UnitSpecScreen
+      UnitSpecScreen,
+      SpecLayout,
+      CustomBaseLayout,
     },
     statePlugins: {
       spec: {
@@ -260,8 +264,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               match,
               specName,
               ops: fromJS({
-                view: query.opsView || 'tickets',
-                filters: { tickets: (query.tickets || '').split(",") }
+                view: query.opsView || "tickets",
+                filters: { tickets: (query.tickets || "").split(",") }
               })
             });
             return nuState;
@@ -288,8 +292,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           },
           urlSpec(state, query) {
             const curPath = state.getIn(["match", "url"]);
-            let url = window.location.origin + '/#' + curPath;
-            url += '?' + qs.stringify(query)
+            let url = window.location.origin + "/#" + curPath;
+            url += "?" + qs.stringify(query);
             return url;
           }
         }

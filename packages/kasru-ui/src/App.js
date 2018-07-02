@@ -3,7 +3,7 @@ import 'semantic-ui-css/semantic.css';
 import 'swagger-ui/dist/swagger-ui.css';
 import 'swagger-editor/dist/swagger-editor.css';
 
-import SwaggerEditor, {plugins} from 'swagger-editor';
+import SwaggerEditor from 'swagger-editor';
 import './App.css';
 
 import SwaggerEditorPresets from './standalone';

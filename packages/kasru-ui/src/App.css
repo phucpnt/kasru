@@ -1,5 +1,13 @@
+* {
+  box-sizing: border-box;
+}
+
 .Pane2 {
   overflow-y: scroll;
+}
+
+#swagger-editor .dropzone{
+  position: static !important;
 }
 
 #swagger-editor .SplitPane {
