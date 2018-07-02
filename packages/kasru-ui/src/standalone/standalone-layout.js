@@ -272,7 +272,7 @@ export class UnitSpecScreen extends Component {
 
     return (
       <Switch>
-        <Route path={`/${specName}/${MODE_SPEC}`} component={EditorLayout} />
+        <Route path={`/${specName}/${MODE_SPEC}`} component={SpecLayout} />
         <Route
           path={`/${specName}/${MODE_STUB}`}
           component={StubEditorLayout}
