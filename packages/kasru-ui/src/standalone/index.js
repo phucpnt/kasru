@@ -47,7 +47,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
     (tickets, ops) => {
       return tickets.reduce((accum, url) => {
         const foundOps = ops.filter(op =>
-          op.getIn(["operation", "x-tickets"]).contains(url)
+          op.getIn(["operation", "x-tickets"], new List()).contains(url)
         );
         return accum.set(url, accum.get(url, new List()).concat(foundOps));
       }, new Map());
@@ -255,15 +255,16 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           },
           "SWMB/UI/SPEC_URL_CHANGE": (state, action) => {
             const { specName, query, match, location } = action.payload;
-            return state.merge({
+            const nuState = state.merge({
               location,
               match,
               specName,
               ops: fromJS({
-                view: query.opsView,
-                filters: { tickets: query.tickets.split(",") }
+                view: query.opsView || 'tickets',
+                filters: { tickets: (query.tickets || '').split(",") }
               })
             });
+            return nuState;
           }
         },
         selectors: {

@@ -70,6 +70,8 @@ class ByTicketsOperationView extends Component {
                 >
                   <Icon name="external" />
                 </a>
+                {/* prevent closing the panel when click copy to clipboard */}
+                <div style={{display: 'inline-block', float: 'right'}} onClick={e => {e.stopPropagation();}}>
                 <Clipboard
                   data-clipboard-text={this.props.uiSelectors.urlSpec({
                     opsView: "tickets",
@@ -80,6 +82,7 @@ class ByTicketsOperationView extends Component {
                 >
                   <Icon name="linkify" /> Copy link
                 </Clipboard>
+                </div>
               </Header>
             ),
             key: `title-${tag}`
