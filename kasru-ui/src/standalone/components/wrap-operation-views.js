@@ -9,7 +9,6 @@ import {
   Menu
 } from "semantic-ui-react";
 import { List } from "immutable";
-import { matchPath } from "react-router-dom";
 import Clipboard from "react-clipboard.js";
 
 const SWAGGER2_OPERATION_METHODS = [
@@ -135,7 +134,7 @@ class ByTicketsOperationView extends Component {
     const tickets = this.props.specSelectors.tickets();
     const panels = this.getPanels(opsByTickets);
     return (
-      <div className="kasru-operations-container">
+      <div className="kasru-operations-container" id="kasru-operations-container">
         <Form.Field>
           <label>Filter: </label>
           <Dropdown

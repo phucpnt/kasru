@@ -260,6 +260,8 @@ export class UnitSpecScreen extends Component {
     const EditorLayout = getComponent("EditorLayout", true);
     const StubEditorLayout = getComponent("StubEditorLayout", true);
     const TestLayout = getComponent("TestLayout", true);
+    const SpecLayout = getComponent("SpecLayout", true);
+
     if (!specName) {
       return (
         <Loader active inline="center" size="large">

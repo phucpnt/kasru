@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV=development DIR_SPEC=../../specs nodemon --inspect --watch src --watch server.js server.js",
+    "start": "NODE_ENV=development DIR_SPEC=/Users/phucpnt/projects/expr-swagger/specs nodemon --inspect --watch src --watch server.js server.js",
     "server:run": "NODE_ENV=production DIR_SPEC=../../specs node server.js"
   },
   "author": "Phuc PNT. <pn.truongphuc@gmail.com>",
