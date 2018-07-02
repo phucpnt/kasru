@@ -1,35 +1,40 @@
 const { Router } = require("express");
 const passport = require("passport");
-const { OAuthStrategy } = require("passport-oauth");
+const { OAuth2Strategy } = require("passport-oauth");
 const route = Router();
+
+route.use(passport.initialize());
+route.use(passport.session());
 
 route.get("/github", (req, res) => {
   const accessToken = req.query.token;
-  console.info(res.location());
+  console.info(accessToken);
+  res.json({hello: 'world'});
+  res.end();
   // res.redirect(res.location() + "/token");
 });
 
 passport.use(
   "github",
-  new OAuthStrategy({
-    requestTokenURL: "https://github.com/login/oauth/request_token",
-    accessTokenURL: "https://github.com/login/oauth/access_token",
-    userAuthorizationURL: "https://github.com/login/oauth/authorize",
-    consumerKey: "123-456-789",
-    consumerSecret: "shhh-its-a-secret",
-    callbackURL: "http://localhost:3003/connect/github/token/callback"
-  }, (token, tokenSecret, profile, done) => {
-    console.info('github token', token, tokenSecret);
-    done(profile);
+  new OAuth2Strategy({
+    authorizationURL: 'https://github.com/login/oauth/authorize',
+    tokenURL: 'https://github.com/login/oauth/access_token',
+    clientID: '1641b6eb2cfb6be8d3ef',
+    clientSecret: 'c3565cf4a6da7ce89fd8a84864fdce04fd12f6f5',
+    callbackURL: 'http://localhost:3003/connect/github/token/callback',
+  }, (token, refreshToken, profile, done) => {
+    console.info('github token', token, refreshToken, profile);
+    done(false, profile);
   })
 );
 
-route.get("/github/token", passport.authenticate("github"));
+route.get("/github/token", passport.authenticate("github", {scope: ['gist', 'read:user']}));
 route.get(
   "/github/token/callback",
   passport.authenticate("github", {
-    successRedirect: "/",
-    failureRedirect: "/github/token/fail"
+    session: false,
+    successRedirect: "/connect/github",
+    failureRedirect: "/connect/github/token/fail"
   })
 );
 
