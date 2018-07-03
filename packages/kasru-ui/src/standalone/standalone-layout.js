@@ -17,12 +17,14 @@ import {
   Segment,
   List,
   Label,
-  Portal
+  Portal,
+  Radio,
 } from "semantic-ui-react";
 import Clipboard from "react-clipboard.js";
-import Swagger from "swagger-client";
+import 'brace/keybinding/vim';
 
 import SpecSelect from "./components/spec-select";
+
 
 const MODE_SPEC = "spec";
 const MODE_SPEC_READ_ONLY = "spec_read"
@@ -40,6 +42,10 @@ class UnitSpecNavigation extends Component {
     const mode = this.props.uiSelectors.currentView();
     this.props.history.push(`/${specName}/${mode}`);
   };
+
+  toggleVimMode = (status) => {
+    this.props.uiActions.toggleVimMode(status);
+  }
 
   render() {
     const { specName, specActions, mode } = this.props;
@@ -105,6 +111,9 @@ class UnitSpecNavigation extends Component {
             <Icon name="id badge" />
             {this.props.session}
           </Label>
+          <Radio toggle fitted label="VIM" style={{marginLeft: '0.5em'}} onChange={(e, data) => {
+            this.toggleVimMode(data.checked);
+          }}/>
         </List.Item>
       </List>
     );
