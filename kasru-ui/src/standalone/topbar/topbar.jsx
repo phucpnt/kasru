@@ -8,7 +8,6 @@ import reactFileDownload from "react-file-download";
 import YAML from "js-yaml";
 import beautifyJson from "json-beautify";
 
-import kebabCase from "lodash/kebabCase";
 import { Button } from "semantic-ui-react";
 
 import "react-dd-menu/dist/react-dd-menu.css";

@@ -55,6 +55,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       }, new Map());
     }
   );
+  let specEditorInstance = null;
 
   return {
     wrapComponents: {
@@ -69,7 +70,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       TestEditor,
       UnitSpecScreen,
       SpecLayout,
-      CustomBaseLayout,
+      CustomBaseLayout
     },
     statePlugins: {
       spec: {
@@ -238,26 +239,39 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           },
           handleLocationChange({ location, match }) {
             const { search } = location;
-
-            if (match.params.mode === "spec" || match.params.mode === "spec_read") {
-              const query = qs.parse(search);
-              return {
-                type: "SWMB/UI/SPEC_URL_CHANGE",
-                payload: {
-                  specName: match.params.specName,
-                  query,
-                  match,
-                  location
-                }
-              };
+            return {
+              type: "SWMB/UI/URL_CHANGE",
+              payload: {
+                specName: match.params.specName,
+                query: qs.parse(search),
+                match,
+                location
+              }
+            };
+          },
+          toggleVimMode(status = true) {
+            if (specEditorInstance && specEditorInstance.setKeyboardHandler) {
+              if (status) {
+                specEditorInstance.setKeyboardHandler("ace/keyboard/vim");
+              } else {
+                specEditorInstance.setKeyboardHandler(
+                  "ace/keyboard/keybinding"
+                );
+              }
             }
+            return {
+              type: "SWMB/UI/UPDATE_VIM_MODE",
+              payload: {
+                status
+              }
+            };
           }
         },
         reducers: {
           "SWMB/EDITOR_SWITCH_VIEW": (state, action) => {
             return state.set("editorView", action.payload.viewName);
           },
-          "SWMB/UI/SPEC_URL_CHANGE": (state, action) => {
+          "SWMB/UI/URL_CHANGE": (state, action) => {
             const { specName, query, match, location } = action.payload;
             const nuState = state.merge({
               location,
@@ -269,6 +283,9 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               })
             });
             return nuState;
+          },
+          "SWMB/UI/UPDATE_VIM_MODE": (state, action) => {
+            return state.set("vimMode", action.payload.status || true);
           }
         },
         selectors: {
@@ -292,10 +309,22 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           },
           urlSpecRead(state, query) {
             const curPath = state.getIn(["match", "url"]);
-            const specName = state.get('specName');
+            const specName = state.get("specName");
             let url = window.location.origin + `/#/${specName}/spec_read`;
             url += "?" + qs.stringify(query);
             return url;
+          }
+        }
+      },
+      editor: {
+        wrapActions: {
+          onLoad: (ori, sys) => context => {
+            const { editor } = context;
+            // Any other calls for editor#onLoad
+            ori(context);
+
+            specEditorInstance = editor;
+            return;
           }
         }
       },
