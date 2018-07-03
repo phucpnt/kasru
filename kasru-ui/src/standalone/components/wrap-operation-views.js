@@ -72,7 +72,7 @@ class ByTicketsOperationView extends Component {
                 {/* prevent closing the panel when click copy to clipboard */}
                 <div style={{display: 'inline-block', float: 'right'}} onClick={e => {e.stopPropagation();}}>
                 <Clipboard
-                  data-clipboard-text={this.props.uiSelectors.urlSpec({
+                  data-clipboard-text={this.props.uiSelectors.urlSpecRead({
                     opsView: "tickets",
                     tickets: tag
                   })}

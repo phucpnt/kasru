@@ -25,6 +25,7 @@ import Swagger from "swagger-client";
 import SpecSelect from "./components/spec-select";
 
 const MODE_SPEC = "spec";
+const MODE_SPEC_READ_ONLY = "spec_read"
 const MODE_STUB = "stub";
 const MODE_TEST = "test";
 
@@ -272,7 +273,8 @@ export class UnitSpecScreen extends Component {
 
     return (
       <Switch>
-        <Route path={`/${specName}/${MODE_SPEC}`} component={SpecLayout} />
+        <Route path={`/${specName}/${MODE_SPEC}`} component={EditorLayout} />
+        <Route path={`/${specName}/${MODE_SPEC_READ_ONLY}`} component={SpecLayout} />
         <Route
           path={`/${specName}/${MODE_STUB}`}
           component={StubEditorLayout}

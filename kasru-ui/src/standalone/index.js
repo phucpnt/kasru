@@ -239,7 +239,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           handleLocationChange({ location, match }) {
             const { search } = location;
 
-            if (match.params.mode === "spec") {
+            if (match.params.mode === "spec" || match.params.mode === "spec_read") {
               const query = qs.parse(search);
               return {
                 type: "SWMB/UI/SPEC_URL_CHANGE",
@@ -290,9 +290,10 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               location: state.get("location")
             };
           },
-          urlSpec(state, query) {
+          urlSpecRead(state, query) {
             const curPath = state.getIn(["match", "url"]);
-            let url = window.location.origin + "/#" + curPath;
+            const specName = state.get('specName');
+            let url = window.location.origin + `/#/${specName}/spec_read`;
             url += "?" + qs.stringify(query);
             return url;
           }
