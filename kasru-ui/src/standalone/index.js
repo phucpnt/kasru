@@ -36,10 +36,11 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
     state => getSystem().specSelectors.operationsWithRootInherited(),
     ops => {
       const tickets = ops
-        .map(op => op.getIn(["operation", "x-tickets"], "no tickets assigned"))
+        .map(op => op.getIn(["operation", "x-tickets"]))
         .flatten()
         .toSet()
-        .toList();
+        .toList()
+        .map(url => (!url ? "ZZ no ticket assigned ZZ" : url)).sort();
       return tickets;
     }
   );
@@ -48,10 +49,17 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
     state => getSystem().specSelectors.operationsWithRootInherited(),
     (tickets, ops) => {
       return tickets.reduce((accum, url) => {
-        const foundOps = ops.filter(op =>
-          op.getIn(["operation", "x-tickets"], new List()).contains(url)
-        );
-        return accum.set(url, accum.get(url, new List()).concat(foundOps));
+        const foundOps = ops.filter(op => {
+          let tickets = op.getIn(["operation", "x-tickets"]);
+          if (!tickets) {
+            tickets = new List(["ZZ no ticket assigned ZZ"]);
+          }
+          return tickets.contains(url);
+        });
+        if (foundOps) {
+          return accum.set(url, accum.get(url, new List()).concat(foundOps));
+        }
+        return accum;
       }, new Map());
     }
   );
