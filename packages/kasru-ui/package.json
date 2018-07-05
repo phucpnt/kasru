@@ -19,7 +19,8 @@
     "semantic-ui-css": "^2.3.2",
     "semantic-ui-react": "^0.81.3",
     "swagger-client": "^3.8.8",
-    "swagger-editor": "^3.6.1"
+    "swagger-editor": "^3.6.1",
+    "immutable": "^3.8.2"
   },
   "scripts": {
     "start": "react-scripts start",

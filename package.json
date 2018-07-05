@@ -9,8 +9,5 @@
 	},
 	"devDependencies": {
 		"lerna": "^2.9.0"
-	},
-	"dependencies": {
-		"immutable": "^3.8.2"
 	}
 }
