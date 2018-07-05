@@ -193,6 +193,7 @@ export default function definePlugin({ getSystem }) {
             "upstreamNotify",
             new Map({
               display: updatedSpec || updatedStub,
+              havingUpdate: updatedSpec || updatedStub,
               ...action.payload.update
             })
           );
