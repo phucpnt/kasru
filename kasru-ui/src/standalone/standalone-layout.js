@@ -19,19 +19,25 @@ import {
   Label,
   Portal,
   Radio,
+  Transition
 } from "semantic-ui-react";
 import Clipboard from "react-clipboard.js";
-import 'brace/keybinding/vim';
+import "brace/keybinding/vim";
 
 import SpecSelect from "./components/spec-select";
 
-
 const MODE_SPEC = "spec";
-const MODE_SPEC_READ_ONLY = "spec_read"
+const MODE_SPEC_READ_ONLY = "spec_read";
 const MODE_STUB = "stub";
 const MODE_TEST = "test";
 
 class UnitSpecNavigation extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      shakingStatus: true
+    };
+  }
   switchMode(mode) {
     const { history, specName, uiActions } = this.props;
     uiActions.switchEditorView(mode);
@@ -43,12 +49,26 @@ class UnitSpecNavigation extends Component {
     this.props.history.push(`/${specName}/${mode}`);
   };
 
-  toggleVimMode = (status) => {
+  toggleVimMode = status => {
     this.props.uiActions.toggleVimMode(status);
-  }
+  };
+
+  keepShaking = () => {
+    window.setTimeout(() => {
+      this.setState({ shakingStatus: !this.state.shakingStatus });
+    }, 700);
+  };
+  persistFromUpstream = () => {
+    console.info("pesist...");
+    return this.props.swmbActions.persistFromUpstream(
+      this.props.specSelectors.specName()
+    );
+  };
 
   render() {
     const { specName, specActions, mode } = this.props;
+    const notify = this.props.swmbSelectors.upstreamNotify();
+
     return (
       <List horizontal relaxed style={{ marginBottom: 0 }}>
         <List.Item>
@@ -58,6 +78,30 @@ class UnitSpecNavigation extends Component {
             onSpecSelect={this.onSpecSelect}
           />
         </List.Item>
+        {notify.get('havingUpdate') && (
+          <List.Item>
+            <Popup
+              trigger={
+                <div>
+                  <Transition
+                    animation="tada"
+                    duration={700}
+                    visible={this.state.shakingStatus}
+                    transitionOnMount={true}
+                    onComplete={this.keepShaking}
+                  >
+                    <Button
+                      icon="exclamation circle"
+                      color="orange"
+                      onClick={this.persistFromUpstream}
+                    />
+                  </Transition>
+                </div>
+              }
+              content="your current modification will be lost. You may consider copy your setup, refresh the page, then click this button. "
+            />
+          </List.Item>
+        )}
         <List.Item>
           <Button.Group style={{ marginRight: "0.1em" }}>
             <Button
@@ -111,9 +155,15 @@ class UnitSpecNavigation extends Component {
             <Icon name="id badge" />
             {this.props.session}
           </Label>
-          <Radio toggle fitted label="VIM" style={{marginLeft: '0.5em'}} onChange={(e, data) => {
-            this.toggleVimMode(data.checked);
-          }}/>
+          <Radio
+            toggle
+            fitted
+            label="VIM"
+            style={{ marginLeft: "0.5em" }}
+            onChange={(e, data) => {
+              this.toggleVimMode(data.checked);
+            }}
+          />
         </List.Item>
       </List>
     );
@@ -156,9 +206,11 @@ export default class StandaloneLayout extends React.Component {
   };
 
   persistFromUpstream = () => {
-    console.info('pesist...');
-    return this.props.swmbActions.persistFromUpstream(this.props.specSelectors.specName());
-  }
+    console.info("pesist...");
+    return this.props.swmbActions.persistFromUpstream(
+      this.props.specSelectors.specName()
+    );
+  };
 
   renderUpstreamNotify() {
     const notify = this.props.swmbSelectors.upstreamNotify();
@@ -182,7 +234,11 @@ export default class StandaloneLayout extends React.Component {
             <div className="clearfix">
               <Popup
                 trigger={
-                  <Button color="grey" floated="right" onClick={this.persistFromUpstream}>
+                  <Button
+                    color="grey"
+                    floated="right"
+                    onClick={this.persistFromUpstream}
+                  >
                     Apply Update
                   </Button>
                 }
@@ -211,7 +267,6 @@ export default class StandaloneLayout extends React.Component {
     const UnitSpecScreen = getComponent("UnitSpecScreen", true);
     const Topbar = getComponent("Topbar", true);
 
-
     return (
       <BrowserRouter>
         <div>
@@ -220,8 +275,11 @@ export default class StandaloneLayout extends React.Component {
             <RouteUnitSpecNavigation
               specName={specName}
               specActions={this.props.specActions}
+              specSelectors={this.props.specSelectors}
               uiActions={this.props.uiActions}
               uiSelectors={this.props.uiSelectors}
+              swmbSelectors={this.props.swmbSelectors}
+              swmbActions={this.props.swmbActions}
               session={this.props.swmbSelectors.session()}
               mode={mode}
             />
@@ -245,7 +303,10 @@ export default class StandaloneLayout extends React.Component {
 export class UnitSpecScreen extends Component {
   componentDidMount() {
     const { specName, mode } = this.props.match.params;
-    this.props.uiActions.handleLocationChange({location: this.props.location, match: this.props.match});
+    this.props.uiActions.handleLocationChange({
+      location: this.props.location,
+      match: this.props.match
+    });
     this.props.uiActions.switchEditorView(mode);
     this.props.specActions.fetchRemoteContent(specName);
   }
@@ -283,7 +344,10 @@ export class UnitSpecScreen extends Component {
     return (
       <Switch>
         <Route path={`/${specName}/${MODE_SPEC}`} component={EditorLayout} />
-        <Route path={`/${specName}/${MODE_SPEC_READ_ONLY}`} component={SpecLayout} />
+        <Route
+          path={`/${specName}/${MODE_SPEC_READ_ONLY}`}
+          component={SpecLayout}
+        />
         <Route
           path={`/${specName}/${MODE_STUB}`}
           component={StubEditorLayout}
