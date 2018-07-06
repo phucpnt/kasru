@@ -1,7 +1,7 @@
 import Swagger from "swagger-client";
 import parseUrl from "url-parse";
 import { createSelector } from "reselect";
-import { List, Map, fromJS } from "immutable";
+import { List, fromJS, OrderedMap } from "immutable";
 import qs from "query-string";
 
 import TopbarPlugin from "./topbar";
@@ -40,8 +40,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
         .flatten()
         .toSet()
         .toList()
-        .map(url => (!url ? "ZZ no ticket assigned ZZ" : url))
-        .sort();
+        .filter(url => !!url)
+        .push("default");
       return tickets;
     }
   );
@@ -53,15 +53,15 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
         const foundOps = ops.filter(op => {
           let tickets = op.getIn(["operation", "x-tickets"]);
           if (!tickets) {
-            tickets = new List(["ZZ no ticket assigned ZZ"]);
+            tickets = List(["default"]);
           }
           return tickets.contains(url);
         });
         if (foundOps) {
-          return accum.set(url, accum.get(url, new List()).concat(foundOps));
+          return accum.set(url, accum.get(url, List()).concat(foundOps));
         }
         return accum;
-      }, new Map());
+      }, OrderedMap());
     }
   );
   let specEditorInstance = null;
