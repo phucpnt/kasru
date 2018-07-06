@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/phucpnt/kasru.svg?style=svg)](https://circleci.com/gh/phucpnt/kasru)
+
 ## Getting started
 
 * Clone this repo
