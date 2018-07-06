@@ -70,17 +70,22 @@ class ByTicketsOperationView extends Component {
                   <Icon name="external" />
                 </a>
                 {/* prevent closing the panel when click copy to clipboard */}
-                <div style={{display: 'inline-block', float: 'right'}} onClick={e => {e.stopPropagation();}}>
-                <Clipboard
-                  data-clipboard-text={this.props.uiSelectors.urlSpecRead({
-                    opsView: "tickets",
-                    tickets: tag
-                  })}
-                  className="ui small button"
-                  button-title="Copy to clipboard"
+                <div
+                  style={{ display: "inline-block", float: "right" }}
+                  onClick={e => {
+                    e.stopPropagation();
+                  }}
                 >
-                  <Icon name="linkify" /> Copy link
-                </Clipboard>
+                  <Clipboard
+                    data-clipboard-text={this.props.uiSelectors.urlSpecRead({
+                      opsView: "tickets",
+                      tickets: tag
+                    })}
+                    className="ui small button"
+                    button-title="Copy to clipboard"
+                  >
+                    <Icon name="linkify" /> Copy link
+                  </Clipboard>
                 </div>
               </Header>
             ),
@@ -134,14 +139,18 @@ class ByTicketsOperationView extends Component {
     const tickets = this.props.specSelectors.tickets();
     const panels = this.getPanels(opsByTickets);
     return (
-      <div className="kasru-operations-container" id="kasru-operations-container">
+      <div
+        className="kasru-operations-container"
+        id="kasru-operations-container"
+      >
         <Form.Field>
           <label>Filter: </label>
           <Dropdown
-            placeholder="Filter by tickets..."
+            placeholder="Filter APIs by tickets..."
             multiple
             search
             selection
+            fluid
             options={tickets
               .map(url => ({
                 text: url.split("/").slice(-1)[0],
@@ -152,7 +161,18 @@ class ByTicketsOperationView extends Component {
             name="filters"
             value={this.state.filters}
             onChange={this.handleFilter}
+            style={{marginBottom: '0.5em'}}
           />
+          <Clipboard
+            data-clipboard-text={this.props.uiSelectors.urlSpecRead({
+              opsView: "tickets",
+              tickets: this.state.filters.map(url => url.split("/").slice(-1)[0]).join(',')
+            })}
+            className="ui small button"
+            button-title="Copy to clipboard"
+          >
+            <Icon name="linkify" /> Copy link to filters
+          </Clipboard>
         </Form.Field>
         <p>&nbsp;</p>
         <Accordion
@@ -204,10 +224,76 @@ export default function wrapOperations(Operations, system) {
           {activeItem === "tickets" && (
             <ByTicketsOperationView {...this.props} />
           )}
-          {activeItem === "tags" && <Operations {...this.props} />}
+          {activeItem === "tags" && (
+            <FilterableOperations {...this.props}>
+              <Operations {...this.props} />
+            </FilterableOperations>
+          )}
         </div>
       );
     }
   }
   return MultipleOperationsView;
+}
+
+class FilterableOperations extends Component {
+  constructor(props) {
+    super(props);
+
+    const keywords = this.props.uiSelectors.ops().getIn(["filters", "tags"]);
+    const tags = keywords.map(w => ({ text: w, value: w })).toJS();
+    this.state = {
+      options: tags,
+      currentValues: keywords.toJS(),
+    };
+  }
+
+  handleAddition = (e, { value }) => {
+    this.setState({
+      options: [{ text: value, value }, ...this.state.options]
+    });
+  };
+
+  handleChange = (e, { value }) => {
+    this.setState({ currentValues: value });
+    this.props.uiActions.updateOpsFilter("tags", value);
+  };
+
+  render() {
+    const { currentValues = [] } = this.state;
+    return (
+      <div>
+        <Form.Field>
+          <label>Filter: </label>
+          <Dropdown
+            options={this.state.options}
+            placeholder="Search apis include tags.."
+            additionLabel="Search for "
+            noResultsMessage="enter your keyword..."
+            search
+            selection
+            fluid
+            multiple
+            allowAdditions
+            value={currentValues}
+            onAddItem={this.handleAddition}
+            onChange={this.handleChange}
+            style={{ marginBottom: "0.5em" }}
+          />
+          <Clipboard
+            data-clipboard-text={this.props.uiSelectors.urlSpecRead({
+              opsView: "tags",
+              tags: currentValues.join(",")
+            })}
+            className="ui small button"
+            button-title="Copy to clipboard"
+          >
+            <Icon name="linkify" /> Copy link to filters
+          </Clipboard>
+        </Form.Field>
+        <p>&nbsp;</p>
+        {this.props.children}
+      </div>
+    );
+  }
 }
