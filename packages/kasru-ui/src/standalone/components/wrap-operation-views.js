@@ -95,7 +95,7 @@ class ByTicketsOperationView extends Component {
             content: (
               <div>
                 {ops
-                  .map(op => {
+                  .map((op,index) => {
                     const path = op.get("path");
                     const method = op.get("method");
                     const specPath = List(["paths", path, method]);
@@ -113,9 +113,11 @@ class ByTicketsOperationView extends Component {
                       return null;
                     }
 
+                    console.info(`${path}-${method}-${tag}`);
+
                     return (
                       <OperationContainer
-                        key={`${path}-${method}`}
+                        key={`${path}-${method}-${tag}`}
                         specPath={specPath}
                         op={op}
                         path={path}
