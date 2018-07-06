@@ -40,7 +40,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
         .flatten()
         .toSet()
         .toList()
-        .map(url => (!url ? "ZZ no ticket assigned ZZ" : url)).sort();
+        .map(url => (!url ? "ZZ no ticket assigned ZZ" : url))
+        .sort();
       return tickets;
     }
   );
@@ -235,6 +236,20 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
             system.swmbActions.persist();
             return origAction(...args);
           }
+        },
+        wrapSelectors: {
+          taggedOperations: (orginSel, system) => (...args) => {
+            let ops = orginSel(...args);
+            const filterTags = system.uiSelectors
+              .ops()
+              .getIn(["filters", "tags"], new List());
+            if (filterTags.size === 0) {
+              return ops;
+            }
+            return ops.filter((obj, tag) =>
+              filterTags.some(phrase => tag.indexOf(phrase) > -1)
+            );
+          }
         }
       },
       ui: {
@@ -273,6 +288,15 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
                 status
               }
             };
+          },
+          updateOpsFilter(type, value) {
+            return {
+              type: "SWMB/UI/UPDATE_OPS_FILTER",
+              payload: {
+                type,
+                value
+              }
+            };
           }
         },
         reducers: {
@@ -287,13 +311,20 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               specName,
               ops: fromJS({
                 view: query.opsView || "tickets",
-                filters: { tickets: (query.tickets || "").split(",") }
+                filters: {
+                  tickets: (query.tickets || "").split(","),
+                  tags: (query.tags || "").split(",")
+                }
               })
             });
             return nuState;
           },
           "SWMB/UI/UPDATE_VIM_MODE": (state, action) => {
             return state.set("vimMode", action.payload.status || true);
+          },
+          "SWMB/UI/UPDATE_OPS_FILTER": (state, action) => {
+            const { type, value } = action.payload;
+            return state.setIn(["ops", "filters", type], fromJS(value));
           }
         },
         selectors: {
@@ -305,7 +336,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               "ops",
               fromJS({
                 view: "tickets",
-                filters: { tickets: [] }
+                filters: { tickets: [], tags: [] }
               })
             );
           },
