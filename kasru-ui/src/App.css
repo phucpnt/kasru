@@ -6,6 +6,10 @@
   overflow-y: scroll;
 }
 
+#app-content{
+  height: 100vh !important;
+}
+
 #swagger-editor .dropzone{
   position: static !important;
 }
