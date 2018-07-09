@@ -8,6 +8,43 @@ const burstCache = () =>
     .toString()
     .slice(2);
 
+function getSpecFromUserGist(gistId) {
+  const userToken = "adb2d8b0bfd1ae036c49baab135916c44fe75c0d";
+  return fetch(`https://api.github.com/gists/${gistId}?${burstCache()}`, {
+    headers: {
+      Authorization: `Token ${userToken}`
+    }
+  })
+    .then(res => res.json())
+    .then(result => {
+      const specData = {};
+      Object.keys(result.files).forEach(fname => {
+        console.info('filename', fname);
+        if (fname.indexOf("spec.yaml") > -1 || fname.indexOf("spec.yml") > -1) {
+          specData.content = result.files[fname].content;
+        }
+        if (fname.indexOf("stub.json") > -1) {
+          specData.stub = result.files[fname].content;
+        }
+      });
+      return { data: specData };
+    });
+}
+
+function getSpecFromServer(specName) {
+  return fetch(
+    [`${API_HOST}/swagger-spec/${specName}`, burstCache()].join("?")
+  ).then(res => res.json());
+}
+
+function getSpec(specName) {
+  if(specName.indexOf('gist:') === 0) {
+    return getSpecFromUserGist(specName.replace('gist:', ''));
+  } else {
+    return getSpecFromServer(specName);
+  }
+}
+
 export default function definePlugin({ getSystem }) {
   const statePlugins = {
     swmb: {
@@ -76,10 +113,7 @@ export default function definePlugin({ getSystem }) {
         },
         persistFromUpstream(specName) {
           return system => {
-            return fetch(
-              [`${API_HOST}/swagger-spec/${specName}`, burstCache()].join("?")
-            )
-              .then(res => res.json())
+            return getSpec(specName)
               .then(result => {
                 const upstreamSpec = result.data.content;
                 const upstreamStub = result.data.stub;
@@ -95,7 +129,8 @@ export default function definePlugin({ getSystem }) {
                         ...data,
                         specContent: upstreamSpec,
                         stubContent: upstreamStub,
-                        tests: upstreamTest || data && data.tests ? data.tests: [],
+                        tests:
+                          upstreamTest || (data && data.tests) ? data.tests : []
                       });
                     });
                   })
@@ -107,10 +142,7 @@ export default function definePlugin({ getSystem }) {
         },
         checkUpstreamChange(specName) {
           return system => {
-            return fetch(
-              [`${API_HOST}/swagger-spec/${specName}`, burstCache()].join("?")
-            )
-              .then(res => res.json())
+            return getSpec(specName)
               .then(result => {
                 const upstreamSpec = result.data.content;
                 const upstreamStub = result.data.stub;

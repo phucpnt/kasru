@@ -19,12 +19,14 @@ import {
   Label,
   Portal,
   Radio,
-  Transition
+  Transition,
+  Sidebar,
+  Menu
 } from "semantic-ui-react";
 import Clipboard from "react-clipboard.js";
 import "brace/keybinding/vim";
 
-import SpecSelect from "./components/spec-select";
+import SpecSelect from "./components/spec-select-next";
 
 const MODE_SPEC = "spec";
 const MODE_SPEC_READ_ONLY = "spec_read";
@@ -72,13 +74,11 @@ class UnitSpecNavigation extends Component {
     return (
       <List horizontal relaxed style={{ marginBottom: 0 }}>
         <List.Item>
-          <SpecSelect
-            specActions={specActions}
-            specName={specName}
-            onSpecSelect={this.onSpecSelect}
-          />
+          <Button color="green" onClick={this.props.onClickTopTitle}>
+            <Icon name="bars" /> {specName}
+          </Button>
         </List.Item>
-        {notify.get('havingUpdate') && (
+        {notify.get("havingUpdate") && (
           <List.Item>
             <Popup
               trigger={
@@ -172,6 +172,16 @@ class UnitSpecNavigation extends Component {
 
 const RouteUnitSpecNavigation = withRouter(UnitSpecNavigation);
 
+const SpecSelectWithRouter = withRouter(props => {
+  const onSpecSelect = specName => {
+    const mode = props.uiSelectors.currentView();
+    props.history.push(`/${specName}/${mode}`);
+    props.onSpecSelect(specName);
+  };
+
+  return <SpecSelect {...props} onSpecSelect={onSpecSelect} />;
+});
+
 export default class StandaloneLayout extends React.Component {
   static propTypes = {
     specActions: PropTypes.object.isRequired,
@@ -182,7 +192,8 @@ export default class StandaloneLayout extends React.Component {
     super(props);
     this.state = {
       showCreateForm: false,
-      newSpecName: ""
+      newSpecName: "",
+      displayLeftSidebar: false
     };
   }
 
@@ -258,8 +269,20 @@ export default class StandaloneLayout extends React.Component {
     return "TODO";
   };
 
+  toggleLeftSidebar = () => {
+    this.setState({ displayLeftSidebar: !this.state.displayLeftSidebar });
+  };
+  handleSidebarHide = () => {
+    this.setState({ displayLeftSidebar: false });
+  };
+
+  onSpecSelect = specName => {
+    const mode = this.props.uiSelectors.currentView();
+    this.props.history.push(`/${specName}/${mode}`);
+  };
+
   render() {
-    console.info(this.props.getComponents());
+    const { displayLeftSidebar } = this.state;
     const mode = this.props.uiSelectors.currentView();
     const specName = this.props.specSelectors.specName();
 
@@ -269,32 +292,51 @@ export default class StandaloneLayout extends React.Component {
 
     return (
       <BrowserRouter>
-        <div>
+        <Sidebar.Pushable as="div">
           {this.renderUpstreamNotify()}
-          <Topbar>
-            <RouteUnitSpecNavigation
-              specName={specName}
+          <Sidebar
+            as={"div"}
+            animation="overlay"
+            direction="left"
+            icon="labeled"
+            onHide={this.handleSidebarHide}
+            vertical
+            visible={displayLeftSidebar}
+            width="wide"
+          >
+            <SpecSelectWithRouter
               specActions={this.props.specActions}
-              specSelectors={this.props.specSelectors}
-              uiActions={this.props.uiActions}
               uiSelectors={this.props.uiSelectors}
-              swmbSelectors={this.props.swmbSelectors}
-              swmbActions={this.props.swmbActions}
-              session={this.props.swmbSelectors.session()}
-              mode={mode}
+              onSpecSelect={this.handleSidebarHide}
             />
-          </Topbar>
-          <Switch>
-            <Route path={`/:specName/:mode`} component={UnitSpecScreen} />
-            <Route
-              component={() => (
-                <Header as="h2" textAlign="center" disabled>
-                  Please choose spec
-                </Header>
-              )}
-            />
-          </Switch>
-        </div>
+          </Sidebar>
+          <Sidebar.Pusher id="app-content">
+            <Topbar>
+              <RouteUnitSpecNavigation
+                onClickTopTitle={this.toggleLeftSidebar}
+                specName={specName}
+                specActions={this.props.specActions}
+                specSelectors={this.props.specSelectors}
+                uiActions={this.props.uiActions}
+                uiSelectors={this.props.uiSelectors}
+                swmbSelectors={this.props.swmbSelectors}
+                swmbActions={this.props.swmbActions}
+                session={this.props.swmbSelectors.session()}
+                mode={mode}
+              />
+            </Topbar>
+            <Switch>
+              <Route path={`/:specName/:mode`} component={UnitSpecScreen} />
+              <Route
+                component={() => (
+                  <Header as="h2" textAlign="center" disabled>
+                    Please choose spec
+                  </Header>
+                )}
+              />
+            </Switch>
+          </Sidebar.Pusher>
+        </Sidebar.Pushable>
       </BrowserRouter>
     );
   }

@@ -71,6 +71,17 @@ route.get("/register-session", (req, res) => {
 
 route.get("/:specName", (req, res) => {
   const specName = req.params.specName;
+
+  if(specName.indexOf('gist:') === 0){
+    res.json({
+      content: null,
+      stub: null,
+      message: 'gist spec. spec content will be queried by APP via CORS',
+    });
+    res.end();
+    return;
+  }
+
   const specPath = path.join(DIR_SPEC, `${specName}${YAML_EXT}`);
   const stubPath = path.join(DIR_SPEC, `${specName}${STUB_EXT}`);
 
