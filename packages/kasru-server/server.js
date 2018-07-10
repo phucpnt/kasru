@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.use(express.static(path.join(__dirname, "../swagger-mb-ui/build")));
+app.use(express.static(path.join(__dirname, "../kasru-ui/build")));
 
 if (process.env.NODE_ENV === "development") {
   console.info('simulate delay response...');
