@@ -2,6 +2,9 @@ const { Router } = require("express");
 const session = require("express-session");
 const passport = require("passport");
 const { OAuth2Strategy } = require("passport-oauth");
+
+const {GH_CLIENT_ID, GH_CLIENT_SECRET, GH_CALLBACK_HOST} = require('../global-var');
+
 const route = Router();
 
 route.use(session({ secret: "kasru-session", resave: false, saveUninitialized: false }));
@@ -14,9 +17,9 @@ passport.use(
     {
       authorizationURL: "https://github.com/login/oauth/authorize",
       tokenURL: "https://github.com/login/oauth/access_token",
-      clientID: "1641b6eb2cfb6be8d3ef",
-      clientSecret: "c3565cf4a6da7ce89fd8a84864fdce04fd12f6f5",
-      callbackURL: "http://localhost:3003/connect/github/token/callback"
+      clientID: GH_CLIENT_ID,
+      clientSecret: GH_CLIENT_SECRET,
+      callbackURL: `${GH_CALLBACK_HOST}/connect/github/token/callback`
     },
     (token, refreshToken, profile, done) => {
       console.info("github token", token, refreshToken, profile);

@@ -65,9 +65,10 @@ class SpecSelect extends Component {
                   fluid
                   color="blue"
                   onClick={() => {
-                    window.location = `//${API_HOST}/connect/github?callback=${encodeURIComponent(
+                    const url = `${API_HOST}/connect/github?callback=${encodeURIComponent(
                       window.location.origin + '/#/connect/github'
                     )}`;
+                    window.location = url;
                   }}
                 >
                   <Icon name="github" /> Connect to Github/Gist
