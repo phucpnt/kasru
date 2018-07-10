@@ -26,12 +26,10 @@ passport.use(
 );
 
 passport.serializeUser(function(user, done) {
-  console.info("serialize user", user);
   done(null, user);
 });
 
 passport.deserializeUser(function(user, done) {
-  console.info("deserialize user", user);
   done(null, user);
 });
 
@@ -54,9 +52,6 @@ route.get(
     failureRedirect: "/connect/github/token/fail"
   }),
   (req, res) => {
-    console.info(req.user);
-    console.info(req.account);
-    console.info(req.session);
     res.send(`
     <body>
       Loading...
