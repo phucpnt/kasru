@@ -31,12 +31,13 @@ class SpecSelect extends Component {
   handleChange = (e, { name, value }) => this.setState({ [name]: value });
 
   onQueryGist = () => {
-    console.info(this.state);
-    this.onSpecSelect({specName: `gist:${this.state.gistId}`});
+    this.onSpecSelect({ specName: `gist:${this.state.gistId}` });
   };
 
   render() {
     const { specList } = this.props;
+    const connectGithub = this.props.swmbSelectors.connectSocial("github");
+
     return (
       <Menu vertical fluid fixed="left">
         <Menu.Item>
@@ -59,18 +60,33 @@ class SpecSelect extends Component {
           <Icon name="github" /> Gist
           <Menu.Menu>
             <Menu.Item>
-              <Form>
-                <Form.Group>
-                  <Form.Input
-                    name="gistId"
-                    placeholder="enter your gist id"
-                    onChange={this.handleChange}
-                  />
-                  <Form.Button icon onClick={this.onQueryGist}>
-                    <Icon name="play" />
-                  </Form.Button>
-                </Form.Group>
-              </Form>
+              {!connectGithub.get('connected') && (
+                <Button
+                  fluid
+                  color="blue"
+                  onClick={() => {
+                    window.location = `//${API_HOST}/connect/github?callback=${encodeURIComponent(
+                      window.location.origin + '/#/connect/github'
+                    )}`;
+                  }}
+                >
+                  <Icon name="github" /> Connect to Github/Gist
+                </Button>
+              )}
+              {connectGithub.get('connected') && (
+                <Form>
+                  <Form.Group>
+                    <Form.Input
+                      name="gistId"
+                      placeholder="enter your gist id"
+                      onChange={this.handleChange}
+                    />
+                    <Form.Button icon onClick={this.onQueryGist}>
+                      <Icon name="play" />
+                    </Form.Button>
+                  </Form.Group>
+                </Form>
+              )}
             </Menu.Item>
           </Menu.Menu>
         </Menu.Item>

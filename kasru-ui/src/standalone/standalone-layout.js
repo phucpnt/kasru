@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import qs from "query-string";
 
 import {
   HashRouter as BrowserRouter,
@@ -307,6 +308,7 @@ export default class StandaloneLayout extends React.Component {
             <SpecSelectWithRouter
               specActions={this.props.specActions}
               uiSelectors={this.props.uiSelectors}
+              swmbSelectors={this.props.swmbSelectors}
               onSpecSelect={this.handleSidebarHide}
             />
           </Sidebar>
@@ -326,6 +328,17 @@ export default class StandaloneLayout extends React.Component {
               />
             </Topbar>
             <Switch>
+              <Route
+                path={`/connect/:provider`}
+                exact
+                component={props => (
+                  <SocialNetworkConnector
+                    {...props}
+                    swmbActions={this.props.swmbActions}
+                    swmbSelectors={this.props.swmbSelectors}
+                  />
+                )}
+              />
               <Route path={`/:specName/:mode`} component={UnitSpecScreen} />
               <Route
                 component={() => (
@@ -339,6 +352,25 @@ export default class StandaloneLayout extends React.Component {
         </Sidebar.Pushable>
       </BrowserRouter>
     );
+  }
+}
+
+function SocialNetworkConnector(props) {
+  const query = qs.parse(props.location.search);
+  const { provider } = props.match.params;
+  const { swmbActions, swmbSelectors } = props;
+
+  swmbActions.connectSocial({
+    provider,
+    token: query.token
+  });
+  const connectInfo = swmbSelectors.connectSocial(provider);
+
+  if (connectInfo.get("connected")) {
+    props.history.push("/");
+    return null;
+  } else {
+    return <h1>Connected to github</h1>;
   }
 }
 

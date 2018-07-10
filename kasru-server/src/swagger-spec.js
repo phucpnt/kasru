@@ -249,9 +249,6 @@ route.get("/:specName/mb-exec", (req, res) => {
       });
 
       $action = $action.then(() => Imposter._deleteOldImposter());
-      $action = $action.then(() =>
-        writeStubId2SwaggerSpec(api.generatedStubIds, specPath)
-      );
       $action = $action
         .then(updatedSpec =>
           fs.exists(stubPath).then(fileExists => {
