@@ -9,26 +9,31 @@ const burstCache = () =>
     .slice(2);
 
 function getSpecFromUserGist(gistId) {
-  const userToken = "adb2d8b0bfd1ae036c49baab135916c44fe75c0d";
-  return fetch(`https://api.github.com/gists/${gistId}?${burstCache()}`, {
-    headers: {
-      Authorization: `Token ${userToken}`
-    }
-  })
-    .then(res => res.json())
-    .then(result => {
-      const specData = {};
-      Object.keys(result.files).forEach(fname => {
-        console.info('filename', fname);
-        if (fname.indexOf("spec.yaml") > -1 || fname.indexOf("spec.yml") > -1) {
-          specData.content = result.files[fname].content;
-        }
-        if (fname.indexOf("stub.json") > -1) {
-          specData.stub = result.files[fname].content;
-        }
+  return lf.getItem("swmb/connect").then(connect => {
+    return connect && connect.github ? connect.github.token : null;
+  }).then(userToken => {
+    return fetch(`https://api.github.com/gists/${gistId}?${burstCache()}`, {
+      headers: {
+        Authorization: `Token ${userToken}`
+      }
+    })
+      .then(res => res.json())
+      .then(result => {
+        const specData = {};
+        Object.keys(result.files).forEach(fname => {
+          if (
+            fname.indexOf("spec.yaml") > -1 ||
+            fname.indexOf("spec.yml") > -1
+          ) {
+            specData.content = result.files[fname].content;
+          }
+          if (fname.indexOf("stub.json") > -1) {
+            specData.stub = result.files[fname].content;
+          }
+        });
+        return { data: specData };
       });
-      return { data: specData };
-    });
+  });
 }
 
 function getSpecFromServer(specName) {
@@ -38,8 +43,8 @@ function getSpecFromServer(specName) {
 }
 
 function getSpec(specName) {
-  if(specName.indexOf('gist:') === 0) {
-    return getSpecFromUserGist(specName.replace('gist:', ''));
+  if (specName.indexOf("gist:") === 0) {
+    return getSpecFromUserGist(specName.replace("gist:", ""));
   } else {
     return getSpecFromServer(specName);
   }
@@ -51,6 +56,9 @@ export default function definePlugin({ getSystem }) {
       actions: {
         registerSession() {
           return system => {
+            lf.getItem("swmb/connect").then(connect => {
+              system.swmbActions.connectSocial_success(connect);
+            });
             lf.getItem("swmb").then(swmb => {
               if (swmb === null) {
                 swmb = {};
@@ -113,57 +121,55 @@ export default function definePlugin({ getSystem }) {
         },
         persistFromUpstream(specName) {
           return system => {
-            return getSpec(specName)
-              .then(result => {
-                const upstreamSpec = result.data.content;
-                const upstreamStub = result.data.stub;
-                const upstreamTest = result.data.test;
-                lf.setItem(`swmb/${specName}/0`, {
-                  specContent: upstreamSpec,
-                  stubContent: upstreamStub,
-                  tests: upstreamTest
-                })
-                  .then(() => {
-                    return lf.getItem(`swmb/${specName}`).then(data => {
-                      return lf.setItem(`swmb/${specName}`, {
-                        ...data,
-                        specContent: upstreamSpec,
-                        stubContent: upstreamStub,
-                        tests:
-                          upstreamTest || (data && data.tests) ? data.tests : []
-                      });
+            return getSpec(specName).then(result => {
+              const upstreamSpec = result.data.content;
+              const upstreamStub = result.data.stub;
+              const upstreamTest = result.data.test;
+              lf.setItem(`swmb/${specName}/0`, {
+                specContent: upstreamSpec,
+                stubContent: upstreamStub,
+                tests: upstreamTest
+              })
+                .then(() => {
+                  return lf.getItem(`swmb/${specName}`).then(data => {
+                    return lf.setItem(`swmb/${specName}`, {
+                      ...data,
+                      specContent: upstreamSpec,
+                      stubContent: upstreamStub,
+                      tests:
+                        upstreamTest || (data && data.tests) ? data.tests : []
                     });
-                  })
-                  .then(() => {
-                    return system.swmbActions.rehydrate(specName);
                   });
-              });
+                })
+                .then(() => {
+                  return system.swmbActions.rehydrate(specName);
+                });
+            });
           };
         },
         checkUpstreamChange(specName) {
           return system => {
-            return getSpec(specName)
-              .then(result => {
-                const upstreamSpec = result.data.content;
-                const upstreamStub = result.data.stub;
-                const upstreamChanged = { spec: false, stub: false };
-                lf.getItem(`swmb/${specName}/0`).then(swmb => {
-                  if (!swmb) {
-                    swmb = {};
-                  }
-                  const { specContent, stubContent } = swmb;
-                  if (upstreamSpec !== specContent) {
-                    upstreamChanged.spec = true;
-                  }
-                  if (upstreamStub !== stubContent) {
-                    upstreamChanged.stub = true;
-                  }
-                  system.swmbActions.notifyUpstreamChange(
-                    specName,
-                    upstreamChanged
-                  );
-                });
+            return getSpec(specName).then(result => {
+              const upstreamSpec = result.data.content;
+              const upstreamStub = result.data.stub;
+              const upstreamChanged = { spec: false, stub: false };
+              lf.getItem(`swmb/${specName}/0`).then(swmb => {
+                if (!swmb) {
+                  swmb = {};
+                }
+                const { specContent, stubContent } = swmb;
+                if (upstreamSpec !== specContent) {
+                  upstreamChanged.spec = true;
+                }
+                if (upstreamStub !== stubContent) {
+                  upstreamChanged.stub = true;
+                }
+                system.swmbActions.notifyUpstreamChange(
+                  specName,
+                  upstreamChanged
+                );
               });
+            });
           };
         },
         persist: () => {
@@ -209,6 +215,31 @@ export default function definePlugin({ getSystem }) {
           return {
             type: "SWMB/SWMB/NOTIFY_UPSTREAM_DISMISS"
           };
+        },
+        connectSocial({ provider, token }) {
+          return system => {
+            return lf
+              .getItem("swmb/connect")
+              .then((val = {}) => {
+                const connect = Object.assign({}, val, {
+                  [provider]: {
+                    token,
+                    connected: true
+                  }
+                });
+                return lf.setItem("swmb/connect", connect);
+              })
+              .then(() => lf.getItem("swmb/connect"))
+              .then(connect => {
+                system.swmbActions.connectSocial_success(connect);
+              });
+          };
+        },
+        connectSocial_success(connect) {
+          return {
+            type: "SWMB/SWMB/CONNECT_SOCIAL",
+            payload: connect
+          };
         }
       },
       reducers: {
@@ -234,6 +265,9 @@ export default function definePlugin({ getSystem }) {
           return state.updateIn(["upstreamNotify"], notify =>
             notify.set("display", false)
           );
+        },
+        "SWMB/SWMB/CONNECT_SOCIAL": (state, action) => {
+          return state.set("connect", fromJS(action.payload));
         }
       },
       selectors: {
@@ -242,6 +276,15 @@ export default function definePlugin({ getSystem }) {
         },
         upstreamNotify(state) {
           return state.get("upstreamNotify", new Map({ display: false }));
+        },
+        connectSocial(state, provider) {
+          return state.getIn(
+            ["connect", provider],
+            fromJS({
+              connected: false,
+              token: null
+            })
+          );
         }
       }
     },
