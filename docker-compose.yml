@@ -4,7 +4,7 @@ version: '3'
 
 services: 
   swmb:
-    image: phucpnt/swmb:latest
+    image: phucpnt/kasru:latest
     volumes: 
       - ./specs:/proj/specs
     ports: 
