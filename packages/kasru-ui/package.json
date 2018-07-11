@@ -25,7 +25,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "npm run build-fix && react-app-rewired build",
-    "build-fix": "sed -i '' '/index.js/d' node_modules/json-refs/node_modules/uri-js/package.json",
+    "build-fix": "sed -i '/index.js/d' node_modules/json-refs/node_modules/uri-js/package.json",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
