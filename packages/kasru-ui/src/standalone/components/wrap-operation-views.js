@@ -40,7 +40,6 @@ class ByTicketsOperationView extends Component {
   }
 
   handleFilter = (evt, { name, value }) => {
-    console.info(name, value);
     this.setState({ [name]: value });
   };
 
@@ -113,7 +112,6 @@ class ByTicketsOperationView extends Component {
                       return null;
                     }
 
-                    console.info(`${path}-${method}-${tag}`);
 
                     return (
                       <OperationContainer
