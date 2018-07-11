@@ -68,9 +68,14 @@ class UnitSpecNavigation extends Component {
     );
   };
 
+  commitUpstream = () => {
+    this.props.swmbActions.commitUpstream(this.props.specSelectors.specName());
+  };
+
   render() {
-    const { specName, specActions, mode } = this.props;
+    const { specName, specActions, mode, specSelectors } = this.props;
     const notify = this.props.swmbSelectors.upstreamNotify();
+    const specUpstream = specSelectors.specUpstream();
 
     return (
       <List horizontal relaxed style={{ marginBottom: 0 }}>
@@ -78,6 +83,11 @@ class UnitSpecNavigation extends Component {
           <Button color="green" onClick={this.props.onClickTopTitle}>
             <Icon name="bars" /> {specName}
           </Button>
+          {specUpstream === "gist" && (
+            <Button onClick={this.commitUpstream} title="⌘-shift-S">
+              <Icon name="cloud upload" /> Commit
+            </Button>
+          )}
         </List.Item>
         {notify.get("havingUpdate") && (
           <List.Item>
