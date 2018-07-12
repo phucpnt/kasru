@@ -11,7 +11,7 @@ import "./App.css";
 class App extends Component {
   componentDidMount() {
     import(/* webpackChunkName: "swagger-editor" */ "swagger-editor").then(SwaggerEditor => {
-      import("./standalone").then(SwaggerEditorPresets => {
+      import("./swagger-plugins").then(SwaggerEditorPresets => {
         SwaggerEditor({
           dom_id: "#swagger-editor",
           layout: "StandaloneLayout",
