@@ -55,24 +55,24 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 function autoRunMBServer() {
-  fs.readdir(path.resolve(DIR_SPEC)).then(files => {
-    specNames = files
-      .filter(f => path.extname(f) === ".yaml")
-      .map(f => path.basename(f, ".yaml"));
-    let $p = Promise.resolve("");
-    specNames.forEach(specName => {
-      console.info("auto start", specName);
-      $p = $p.then(
-        () =>
-          new Promise(resolve =>
-            http.get(
-              `http://127.0.0.1:${PORT}/swagger-spec/${specName}/mb-exec`,
-              res => {
-                resolve();
-              }
-            )
-          )
-      );
-    });
-  });
+  // fs.readdir(path.resolve(DIR_SPEC)).then(files => {
+  //   specNames = files
+  //     .filter(f => path.extname(f) === ".yaml")
+  //     .map(f => path.basename(f, ".yaml"));
+  //   let $p = Promise.resolve("");
+  //   specNames.forEach(specName => {
+  //     console.info("auto start", specName);
+  //     $p = $p.then(
+  //       () =>
+  //         new Promise(resolve =>
+  //           http.get(
+  //             `http://127.0.0.1:${PORT}/swagger-spec/${specName}/mb-exec`,
+  //             res => {
+  //               resolve();
+  //             }
+  //           )
+  //         )
+  //     );
+  //   });
+  // });
 }
