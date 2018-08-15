@@ -321,7 +321,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               match,
               specName,
               ops: fromJS({
-                view: query.opsView || "tickets",
+                view: query.opsView || "tags",
                 filters: {
                   tickets: (query.tickets || "").split(","),
                   tags: (query.tags || "").split(",")
@@ -346,7 +346,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
             return state.get(
               "ops",
               fromJS({
-                view: "tickets",
+                view: "tags",
                 filters: { tickets: [], tags: [] }
               })
             );
