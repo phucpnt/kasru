@@ -207,17 +207,17 @@ export default function wrapOperations(Operations, system) {
         <div>
           <Menu color="green" pointing size="large" widths={2}>
             <Menu.Item
-              key="tickets"
-              id="tickets"
-              name="JIRA tickets"
-              active={activeItem === "tickets"}
-              onClick={this.handleMenuClick}
-            />
-            <Menu.Item
               key="tags"
               id="tags"
               name="Tags"
               active={activeItem === "tags"}
+              onClick={this.handleMenuClick}
+            />
+            <Menu.Item
+              key="tickets"
+              id="tickets"
+              name="JIRA tickets"
+              active={activeItem === "tickets"}
               onClick={this.handleMenuClick}
             />
           </Menu>
