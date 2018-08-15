@@ -21,6 +21,7 @@ import test from "./state/test";
 import testSchedule from "./state/test-schedule";
 import wrapInfo from "./components/make-info-login-form";
 import wrapOperations from "./components/wrap-operation-views";
+import wrapOperationSummary from './components/wrap-operation-summary';
 
 let StubEditor = makeEditor({
   editorPluginsToRun: ["gutterClick", "pasteHandler"]
@@ -69,7 +70,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
   return {
     wrapComponents: {
       info: wrapInfo,
-      operations: wrapOperations
+      operations: wrapOperations,
+      OperationSummary: wrapOperationSummary,
     },
     components: {
       StandaloneLayout,
