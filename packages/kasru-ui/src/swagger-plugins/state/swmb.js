@@ -1,6 +1,7 @@
 import lf from "localforage";
 import { API_HOST } from "../global-vars";
 import { Map, fromJS } from "immutable";
+import defaultsDeep from 'lodash/defaultsDeep';
 import debounce from "lodash/debounce";
 
 const burstCache = () =>
@@ -8,32 +9,62 @@ const burstCache = () =>
     .toString()
     .slice(2);
 
-function getSpecFromUserGist(gistId) {
+function getGistToken() {
   return lf.getItem("swmb/connect").then(connect => {
     return connect && connect.github ? connect.github.token : null;
-  }).then(userToken => {
-    return fetch(`https://api.github.com/gists/${gistId}?${burstCache()}`, {
-      headers: {
-        Authorization: `Token ${userToken}`
-      }
-    })
-      .then(res => res.json())
-      .then(result => {
-        const specData = {};
-        Object.keys(result.files).forEach(fname => {
-          if (
-            fname.indexOf("spec.yaml") > -1 ||
-            fname.indexOf("spec.yml") > -1
-          ) {
-            specData.content = result.files[fname].content;
-          }
-          if (fname.indexOf("stub.json") > -1) {
-            specData.stub = result.files[fname].content;
-          }
-        });
-        return { data: specData };
-      });
   });
+}
+
+function gistFetch(url, options) {
+  return lf
+    .getItem("swmb/connect")
+    .then(connect => {
+      return connect && connect.github ? connect.github.token : null;
+    })
+    .then(userToken => {
+      return fetch(
+        url,
+        defaultsDeep(
+          {
+            headers: {
+              Authorization: `Token ${userToken}`
+            }
+          },
+          options
+        )
+      );
+    });
+}
+
+function getSpecFromUserGist(gistId) {
+  return lf
+    .getItem("swmb/connect")
+    .then(connect => {
+      return connect && connect.github ? connect.github.token : null;
+    })
+    .then(userToken => {
+      return fetch(`https://api.github.com/gists/${gistId}?${burstCache()}`, {
+        headers: {
+          Authorization: `Token ${userToken}`
+        }
+      })
+        .then(res => res.json())
+        .then(result => {
+          const specData = {};
+          Object.keys(result.files).forEach(fname => {
+            if (
+              fname.indexOf("spec.yaml") > -1 ||
+              fname.indexOf("spec.yml") > -1
+            ) {
+              specData.content = result.files[fname].content;
+            }
+            if (fname.indexOf("stub.json") > -1) {
+              specData.stub = result.files[fname].content;
+            }
+          });
+          return { data: specData };
+        });
+    });
 }
 
 function getSpecFromServer(specName) {
@@ -239,6 +270,36 @@ export default function definePlugin({ getSystem }) {
           return {
             type: "SWMB/SWMB/CONNECT_SOCIAL",
             payload: connect
+          };
+        },
+        commitUpstream(specName) {
+          return system => {
+            const [, gistId] = specName.split(':');
+            const specContent = system.specSelectors.specStr();
+            const stubContent = "[]";
+            const testCasesContent = "[]";
+
+            gistFetch(`https://api.github.com/gists/${gistId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                files: {
+                  "spec.yml": {
+                    content: specContent,
+                  },
+                  "stub.json": {
+                    content: stubContent,
+                  },
+                  "test.json": {
+                    content: testCasesContent,
+                  }
+                }
+              })
+            }).then(res => res.json()).then((result) => {
+              console.info(result);
+            });
           };
         }
       },

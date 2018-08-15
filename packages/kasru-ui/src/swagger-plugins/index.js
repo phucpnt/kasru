@@ -229,6 +229,15 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
           mockUrn(state) {
             return state.get("mockUrn", undefined);
           },
+          specUpstream(state){
+            const specName = state.get('specName');
+            let parts = specName.split(':');
+            if(parts.length === 1){
+              return 'server';
+            } else {
+              return parts[0];
+            }
+          },
           tickets,
           opsByTickets
         },
@@ -354,7 +363,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
             let url = window.location.origin + `/#/${specName}/spec_read`;
             url += "?" + qs.stringify(query);
             return url;
-          }
+          },
         }
       },
       editor: {
