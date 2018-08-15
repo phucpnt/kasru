@@ -19,10 +19,11 @@
     "react-sortable-hoc": "^0.8.3",
     "semantic-ui-css": "^2.3.3",
     "semantic-ui-react": "^0.81.3",
-    "swagger-client": "^3.8.8",
-    "swagger-editor": "^3.6.3"
+    "swagger-client": "^3.8.13",
+    "swagger-editor": "^3.6.8"
   },
   "scripts": {
+    "start:wired": "react-app-rewired start",
     "start": "react-scripts start",
     "build": "npm run build-fix && react-app-rewired build",
     "build-fix": "sed -i '/index.js/d' node_modules/json-refs/node_modules/uri-js/package.json",
