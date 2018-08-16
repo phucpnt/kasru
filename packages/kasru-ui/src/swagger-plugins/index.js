@@ -258,7 +258,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               return ops;
             }
             return ops.filter((obj, tag) =>
-              filterTags.some(phrase => tag.indexOf(phrase) > -1)
+              filterTags.some(phrase => tag && tag.indexOf(phrase) > -1)
             );
           }
         }

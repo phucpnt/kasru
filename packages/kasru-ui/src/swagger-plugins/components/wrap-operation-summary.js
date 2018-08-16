@@ -35,6 +35,7 @@ export default function withAssets(OperationSummary, system) {
                     style={{ cursor: "pointer" }}
                     src={image}
                     key={image}
+                    verticalAlign="top"
                     onClick={() => this.openLightbox(index)}
                   />
                 ))}
@@ -44,6 +45,7 @@ export default function withAssets(OperationSummary, system) {
                 currentImage={this.state.lbCurrentIndex}
                 isOpen={this.state.lightboxIsOpen}
                 onClose={this.closeLightbox}
+                showThumbnails
               />
             </div>
           )}
