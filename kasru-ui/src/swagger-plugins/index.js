@@ -230,7 +230,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
             return state.get("mockUrn", undefined);
           },
           specUpstream(state){
-            const specName = state.get('specName');
+            const specName = state.get('specName', '');
             let parts = specName.split(':');
             if(parts.length === 1){
               return 'server';
