@@ -19,7 +19,6 @@ export default function withAssets(OperationSummary, system) {
     };
     render() {
       const specPath = this.props.specPath.toJS();
-      console.info(system.specSelectors.specJson().getIn(specPath));
       const imageUrls = system.specSelectors
         .specJson()
         .getIn(specPath.concat(["x-files"]), [])
@@ -44,6 +43,15 @@ export default function withAssets(OperationSummary, system) {
                 images={imageUrls.map(img => ({ src: img })).toJS()}
                 currentImage={this.state.lbCurrentIndex}
                 isOpen={this.state.lightboxIsOpen}
+                onClickNext={(e, index) => {
+                  this.setState({ lbCurrentIndex: this.state.lbCurrentIndex + 1 });
+                }}
+                onClickPrev={(e, index) => {
+                  this.setState({ lbCurrentIndex: this.state.lbCurrentIndex - 1 });
+                }}
+                onClickThumbnail={(index) => {
+                  this.setState({ lbCurrentIndex: index });
+                }}
                 onClose={this.closeLightbox}
                 showThumbnails
               />
