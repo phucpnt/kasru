@@ -6,6 +6,7 @@
     "ajv": "^6.5.2",
     "date-fns": "^1.29.0",
     "immutable": "^3.8.2",
+    "loadjs": "^3.5.4",
     "localforage": "^1.7.2",
     "lodash": "^4.17.10",
     "promise-worker": "^1.1.1",
@@ -21,7 +22,8 @@
     "semantic-ui-css": "^2.3.3",
     "semantic-ui-react": "^0.81.3",
     "swagger-client": "^3.8.13",
-    "swagger-editor": "^3.6.8"
+    "swagger-editor": "^3.6.8",
+    "yaml-js": "0.2.3"
   },
   "scripts": {
     "start:wired": "react-app-rewired start",
