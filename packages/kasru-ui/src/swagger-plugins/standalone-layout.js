@@ -28,6 +28,7 @@ import Clipboard from "react-clipboard.js";
 import "brace/keybinding/vim";
 
 import SpecSelect from "./components/spec-select-next";
+import PageGDrive from './components/page-gapi-drive';
 
 const MODE_SPEC = "spec";
 const MODE_SPEC_READ_ONLY = "spec_read";
@@ -352,9 +353,12 @@ export default class StandaloneLayout extends React.Component {
               <Route path={`/:specName/:mode`} component={UnitSpecScreen} />
               <Route
                 component={() => (
-                  <Header as="h2" textAlign="center" disabled>
-                    Please choose spec
-                  </Header>
+                  <div>
+                    <PageGDrive />
+                  </div>
+                  // <Header as="h2" textAlign="center" disabled>
+                  //   Please choose spec
+                  // </Header>
                 )}
               />
             </Switch>
