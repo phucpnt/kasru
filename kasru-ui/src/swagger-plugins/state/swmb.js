@@ -1,8 +1,11 @@
 import lf from "localforage";
-import { API_HOST } from "../global-vars";
 import { Map, fromJS } from "immutable";
-import defaultsDeep from 'lodash/defaultsDeep';
+import defaultsDeep from "lodash/defaultsDeep";
 import debounce from "lodash/debounce";
+import yaml from "js-yaml";
+
+import { API_HOST } from "../global-vars";
+import { loginGDrive } from "../utils/gdrive";
 
 const burstCache = () =>
   Math.random()
@@ -73,9 +76,40 @@ function getSpecFromServer(specName) {
   ).then(res => res.json());
 }
 
+function getSpecFromGdrive(fileId) {
+  const gapi = window.gapi;
+  return loginGDrive().then(() => {
+    const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
+    const authResult = userInstance.getAuthResponse(true);
+    const mimeType = encodeURIComponent("text/plain");
+    return fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
+      {
+        method: "GET",
+        headers: {
+          authorization: "Bearer " + authResult.access_token
+        }
+      }
+    )
+      .then(res => res.text())
+      .then(yamlStr => {
+        const objContent = yaml.load(yamlStr);
+        console.info('gdrive spec', objContent);
+        return {
+          data: {
+            content: objContent.spec,
+            stub: JSON.stringify(objContent.stub)
+          }
+        };
+      });
+  });
+}
+
 function getSpec(specName) {
   if (specName.indexOf("gist:") === 0) {
     return getSpecFromUserGist(specName.replace("gist:", ""));
+  } else if (specName.indexOf("gdrive:") === 0) {
+    return getSpecFromGdrive(specName.replace("gdrive:", ""));
   } else {
     return getSpecFromServer(specName);
   }
@@ -274,32 +308,34 @@ export default function definePlugin({ getSystem }) {
         },
         commitUpstream(specName) {
           return system => {
-            const [, gistId] = specName.split(':');
+            const [, gistId] = specName.split(":");
             const specContent = system.specSelectors.specStr();
             const stubContent = "[]";
             const testCasesContent = "[]";
 
             gistFetch(`https://api.github.com/gists/${gistId}`, {
-              method: 'PATCH',
+              method: "PATCH",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json"
               },
               body: JSON.stringify({
                 files: {
                   "spec.yml": {
-                    content: specContent,
+                    content: specContent
                   },
                   "stub.json": {
-                    content: stubContent,
+                    content: stubContent
                   },
                   "test.json": {
-                    content: testCasesContent,
+                    content: testCasesContent
                   }
                 }
               })
-            }).then(res => res.json()).then((result) => {
-              console.info(result);
-            });
+            })
+              .then(res => res.json())
+              .then(result => {
+                console.info(result);
+              });
           };
         }
       },
