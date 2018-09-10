@@ -60,11 +60,16 @@ export function pickFile(oauthToken, callback) {
   gapi.load("picker", {
     callback: () => {
       const google = window.google;
-      const viewFiles = new google.picker.View(google.picker.ViewId.DOCS);
-      const viewImages = new google.picker.View(
+      const viewFiles = new google.picker.DocsView(google.picker.ViewId.DOCS);
+      viewFiles.setSelectFolderEnabled(true)	
+      viewFiles.setIncludeFolders(true)	
+      const viewImages = new google.picker.DocsView(
         google.picker.ViewId.DOCS_IMAGES
       );
+      viewImages.setSelectFolderEnabled(true)	
+      viewImages.setIncludeFolders(true)	
       const picker = new google.picker.PickerBuilder()
+        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
         .setAppId(PROJ_NUMBER)
         .setOAuthToken(oauthToken)
         .addView(viewFiles)
