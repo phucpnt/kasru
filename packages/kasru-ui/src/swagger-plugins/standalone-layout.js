@@ -28,7 +28,8 @@ import Clipboard from "react-clipboard.js";
 import "brace/keybinding/vim";
 
 import SpecSelect from "./components/spec-select-next";
-import PageGDrive from './components/page-gapi-drive';
+import PageGDrive from "./components/page-gapi-drive";
+import {doAfterLoggedIn, pickFile} from './utils/gdrive';
 
 const MODE_SPEC = "spec";
 const MODE_SPEC_READ_ONLY = "spec_read";
@@ -73,6 +74,15 @@ class UnitSpecNavigation extends Component {
     this.props.swmbActions.commitUpstream(this.props.specSelectors.specName());
   };
 
+  gdriveInsertUrl = () => {
+    doAfterLoggedIn((authInstance) => {
+      const authResult = authInstance.currentUser.get().getAuthResponse(true);
+      pickFile(authResult.access_token, (pickResult) => {
+        console.info(pickResult);
+      })
+    })
+  }
+
   render() {
     const { specName, specActions, mode, specSelectors } = this.props;
     const notify = this.props.swmbSelectors.upstreamNotify();
@@ -81,12 +91,26 @@ class UnitSpecNavigation extends Component {
     return (
       <List horizontal relaxed style={{ marginBottom: 0 }}>
         <List.Item>
-          <Button color="green" onClick={this.props.onClickTopTitle}>
+          <Button
+            color="green"
+            onClick={this.props.onClickTopTitle}
+            style={{
+              maxWidth: "20em",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}
+          >
             <Icon name="bars" /> {specName}
           </Button>
-          {specUpstream === "gist" && (
+          {["gist", "gdrive"].indexOf(specUpstream) > -1 && (
             <Button onClick={this.commitUpstream} title="⌘-shift-S">
               <Icon name="cloud upload" /> Commit
+            </Button>
+          )}
+          {["gdrive"].indexOf(specUpstream) > -1 && (
+            <Button onClick={this.gdriveInsertUrl}>
+              <Icon name="attach" /> Insert URL
             </Button>
           )}
         </List.Item>

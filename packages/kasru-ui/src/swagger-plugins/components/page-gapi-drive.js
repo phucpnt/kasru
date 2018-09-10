@@ -1,6 +1,9 @@
 import React, { Component } from "react";
-import { Button } from "semantic-ui-react";
+import { Button, Container } from "semantic-ui-react";
 import debounce from "lodash/debounce";
+import {withRouter} from 'react-router-dom';
+
+import { doAfterLoggedIn, pickSpec } from "../utils/gdrive";
 
 const CLIENT_ID =
   "320957995205-qs9qa5ngvrn6jnabkijo6peb8cibbck5.apps.googleusercontent.com";
@@ -9,17 +12,18 @@ const DRIVE_SCOPE = [
   "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/drive.metadata"
 ].join(" ");
+const gdocMimeType = "application/vnd.google-apps.document";
 const API_KEY = "AIzaSyD6FnZ52QWuzVvq38pjEltq_FNkhsXCBvw";
 const PROJ_NUMBER = "320957995205";
 
-const createPicker = debounce((oauthToken, callback) => {
+const globalCreatePicker = debounce((oauthToken, callback) => {
   const gapi = window.gapi;
   gapi.load("picker", {
     callback: () => {
       const google = window.google;
       const view = new google.picker.View(google.picker.ViewId.DOCS);
-      view.setMimeTypes("application/json");
-      view.setQuery("title:kasru.json")
+      view.setMimeTypes(gdocMimeType);
+      view.setQuery("title:.yaml");
       const picker = new google.picker.PickerBuilder()
         .enableFeature(google.picker.Feature.NAV_HIDDEN)
         .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
@@ -59,26 +63,21 @@ class PageGDrive extends Component {
     });
   }
 
-  componentWillUnmount() {
+  componentWillUnmount() {}
+
+  createPicker(oauthToken, callback) {
+    globalCreatePicker(oauthToken, callback);
   }
 
-
-  createPicker(oauthToken) {
-    createPicker(oauthToken);
-  }
-
-  pickerCallback = () => {};
+  pickerCallback = (...args) => {
+    console.info("picker", args);
+  };
 
   updateSigninStatus = isSignedIn => {
     if (isSignedIn) {
       const gapi = window.gapi;
-      console.info(
-        "user instance",
-        gapi.auth2.getAuthInstance().currentUser.get()
-      );
       const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
       const authResult = userInstance.getAuthResponse(true);
-      this.createPicker(authResult.access_token, this.pickerCallback);
     }
   };
 
@@ -87,13 +86,29 @@ class PageGDrive extends Component {
     gapi.auth2.getAuthInstance().signIn();
   };
 
+  openPicker = () => {
+    const {history} = this.props;
+    console.info('aaa');
+    doAfterLoggedIn(authInstance => {
+      const authResult = authInstance.currentUser
+        .get()
+        .getAuthResponse(true);
+      pickSpec(authResult.access_token, pickResult => {
+        console.info("pick", pickResult);
+        if (pickResult.action === 'picked') {
+          history.push(`/gdrive:${pickResult.docs[0].id}/spec`);
+        }
+      });
+    });
+  };
+
   render() {
     return (
-      <div>
-        <Button onClick={this.loginToGDrive}>Connect to Google Drive</Button>
-      </div>
+      <Container textAlign="center">
+        <Button onClick={this.openPicker}>Open from GDrive</Button>
+      </Container>
     );
   }
 }
 
-export default PageGDrive;
+export default withRouter(PageGDrive);
