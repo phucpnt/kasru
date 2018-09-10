@@ -5,7 +5,7 @@ import debounce from "lodash/debounce";
 import yaml from "js-yaml";
 
 import { API_HOST } from "../global-vars";
-import { loginGDrive } from "../utils/gdrive";
+import { doAfterLoggedIn } from "../utils/gdrive";
 
 const burstCache = () =>
   Math.random()
@@ -77,32 +77,83 @@ function getSpecFromServer(specName) {
 }
 
 function getSpecFromGdrive(fileId) {
-  const gapi = window.gapi;
-  return loginGDrive().then(() => {
-    const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
-    const authResult = userInstance.getAuthResponse(true);
-    const mimeType = encodeURIComponent("text/plain");
-    return fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
-      {
-        method: "GET",
-        headers: {
-          authorization: "Bearer " + authResult.access_token
+  return new Promise(resolve => {
+    doAfterLoggedIn(authInstance => {
+      const userInstance = authInstance.currentUser.get();
+      const authResult = userInstance.getAuthResponse(true);
+      const mimeType = encodeURIComponent("text/plain");
+      return fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          method: "GET",
+          headers: {
+            authorization: "Bearer " + authResult.access_token
+          }
         }
+      )
+        .then(res => res.text())
+        .then(yamlStr => {
+          const objContent = yaml.load(yamlStr);
+          resolve({
+            data: {
+              content: objContent.spec,
+              stub: JSON.stringify(objContent.stub)
+            }
+          });
+        });
+    });
+  });
+}
+
+function uploadToGDrive(fileId, { spec, stub, test }) {
+  const gapi = window.gapi;
+  const form = new FormData();
+  form.append(
+    "meta",
+    new File(
+      [
+        JSON.stringify({
+          name: "test-spec.yaml",
+          mimeType: "text/plain"
+        })
+      ],
+      "meta.json",
+      {
+        type: "application/json"
       }
     )
-      .then(res => res.text())
-      .then(yamlStr => {
-        const objContent = yaml.load(yamlStr);
-        console.info('gdrive spec', objContent);
-        return {
-          data: {
-            content: objContent.spec,
-            stub: JSON.stringify(objContent.stub)
-          }
-        };
-      });
-  });
+  );
+  form.append(
+    "media",
+    new File(
+      [
+        yaml.dump({
+          description: `Probably you dont want to edit this file directly. Latest updates on ${Date().toString()}.`,
+          spec,
+          stub,
+          test
+        })
+      ],
+      "test-spec.yaml",
+      {
+        type: "text/plain"
+      }
+    )
+  );
+
+  const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
+  const authResult = userInstance.getAuthResponse(true);
+
+  return fetch(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+    {
+      method: "PATCH",
+      headers: {
+        authorization: "Bearer " + authResult.access_token
+      },
+      body: form
+    }
+  ).then(res => res.json());
 }
 
 function getSpec(specName) {
@@ -308,34 +359,44 @@ export default function definePlugin({ getSystem }) {
         },
         commitUpstream(specName) {
           return system => {
-            const [, gistId] = specName.split(":");
+            const [cs, resourceId] = specName.split(":");
             const specContent = system.specSelectors.specStr();
             const stubContent = "[]";
             const testCasesContent = "[]";
 
-            gistFetch(`https://api.github.com/gists/${gistId}`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                files: {
-                  "spec.yml": {
-                    content: specContent
-                  },
-                  "stub.json": {
-                    content: stubContent
-                  },
-                  "test.json": {
-                    content: testCasesContent
-                  }
-                }
-              })
-            })
-              .then(res => res.json())
-              .then(result => {
+            if (cs === "gdrive") {
+              uploadToGDrive(resourceId, {
+                spec: specContent,
+                stub: [],
+                test: [],
+              }).then(result => {
                 console.info(result);
               });
+            } else {
+              gistFetch(`https://api.github.com/gists/${resourceId}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  files: {
+                    "spec.yml": {
+                      content: specContent
+                    },
+                    "stub.json": {
+                      content: stubContent
+                    },
+                    "test.json": {
+                      content: testCasesContent
+                    }
+                  }
+                })
+              })
+                .then(res => res.json())
+                .then(result => {
+                  console.info(result);
+                });
+            }
           };
         }
       },
