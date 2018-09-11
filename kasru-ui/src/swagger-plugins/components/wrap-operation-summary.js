@@ -22,7 +22,9 @@ export default function withAssets(OperationSummary, system) {
       const imageUrls = system.specSelectors
         .specJson()
         .getIn(specPath.concat(["x-files"]), [])
-        .filter(url => /\.(png|jpg|jpeg)$/.test(url.trim()));
+        .filter(url => /\.(png|jpg|jpeg)$/.test((url||'').trim()))
+        ;
+      
       return (
         <div>
           <OperationSummary {...this.props} />
@@ -54,6 +56,7 @@ export default function withAssets(OperationSummary, system) {
                 }}
                 onClose={this.closeLightbox}
                 showThumbnails
+                customControls={[<span>HelloWorld</span>]}
               />
             </div>
           )}

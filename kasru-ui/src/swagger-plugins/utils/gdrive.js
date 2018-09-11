@@ -96,3 +96,7 @@ export function doAfterLoggedIn(callback) {
     }
   });
 }
+
+export function getImageLink(fileId){
+  return `https://drive.google.com/uc?id=${fileId}&__type=.png`;
+}
