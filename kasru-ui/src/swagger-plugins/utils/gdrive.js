@@ -1,5 +1,4 @@
-const CLIENT_ID =
-  "320957995205-qs9qa5ngvrn6jnabkijo6peb8cibbck5.apps.googleusercontent.com";
+import {CLIENT_ID, API_KEY, PROJ_NUMBER} from '../global-vars';
 const DRIVE_SCOPE = [
   "https://www.googleapis.com/auth/drive.readonly",
   "https://www.googleapis.com/auth/drive.appfolder",
@@ -7,8 +6,6 @@ const DRIVE_SCOPE = [
   "https://www.googleapis.com/auth/drive.metadata"
 ].join(" ");
 const gdocMimeType = "text/plain";
-const API_KEY = "AIzaSyD6FnZ52QWuzVvq38pjEltq_FNkhsXCBvw";
-const PROJ_NUMBER = "320957995205";
 
 export function loginGDrive() {
   const gapi = window.gapi;

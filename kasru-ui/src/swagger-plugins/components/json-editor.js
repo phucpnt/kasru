@@ -234,7 +234,7 @@ export default class JsonEditor extends React.Component {
         width="100%"
         heigh="100%"
         tabSize={2}
-        fontSize={14}
+        fontSize={13}
         useSoftTabs="true"
         wrapEnabled={true}
         minLines={2}
