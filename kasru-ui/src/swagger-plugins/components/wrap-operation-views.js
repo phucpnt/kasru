@@ -94,7 +94,7 @@ class ByTicketsOperationView extends Component {
             content: (
               <div>
                 {ops
-                  .map((op,index) => {
+                  .map((op, index) => {
                     const path = op.get("path");
                     const method = op.get("method");
                     const specPath = List(["paths", path, method]);
@@ -111,7 +111,6 @@ class ByTicketsOperationView extends Component {
                     if (validMethods.indexOf(method) === -1) {
                       return null;
                     }
-
 
                     return (
                       <OperationContainer
@@ -136,6 +135,7 @@ class ByTicketsOperationView extends Component {
 
   render() {
     const opsByTickets = this.props.specSelectors.opsByTickets();
+    console.info(this.props.specSelectors);
     const tickets = this.props.specSelectors.tickets();
     const panels = this.getPanels(opsByTickets);
     return (
@@ -161,12 +161,14 @@ class ByTicketsOperationView extends Component {
             name="filters"
             value={this.state.filters}
             onChange={this.handleFilter}
-            style={{marginBottom: '0.5em'}}
+            style={{ marginBottom: "0.5em" }}
           />
           <Clipboard
             data-clipboard-text={this.props.uiSelectors.urlSpecRead({
               opsView: "tickets",
-              tickets: this.state.filters.map(url => url.split("/").slice(-1)[0]).join(',')
+              tickets: this.state.filters
+                .map(url => url.split("/").slice(-1)[0])
+                .join(",")
             })}
             className="ui small button"
             button-title="Copy to clipboard"
@@ -205,7 +207,14 @@ export default function wrapOperations(Operations, system) {
 
       return (
         <div>
-          <Menu color="green" pointing size="large" widths={2}>
+          <Menu color="green" pointing size="large" widths={3}>
+            <Menu.Item
+              key="endpoints"
+              id="endpoints"
+              name="Endpoints"
+              active={activeItem === "endpoints"}
+              onClick={this.handleMenuClick}
+            />
             <Menu.Item
               key="tags"
               id="tags"
@@ -221,6 +230,9 @@ export default function wrapOperations(Operations, system) {
               onClick={this.handleMenuClick}
             />
           </Menu>
+          {activeItem === "endpoints" && (
+            <EndpointOperations {...this.props} />
+          )}
           {activeItem === "tickets" && (
             <ByTicketsOperationView {...this.props} />
           )}
@@ -244,7 +256,7 @@ class FilterableOperations extends Component {
     const tags = keywords.map(w => ({ text: w, value: w })).toJS();
     this.state = {
       options: tags,
-      currentValues: keywords.toJS(),
+      currentValues: keywords.toJS()
     };
   }
 
@@ -293,6 +305,53 @@ class FilterableOperations extends Component {
         </Form.Field>
         <p>&nbsp;</p>
         {this.props.children}
+      </div>
+    );
+  }
+}
+
+class EndpointOperations extends Component {
+  render() {
+    const { specSelectors } = this.props;
+    const ops = this.props.specSelectors.operations();
+    const OperationContainer = this.props.getComponent(
+      "OperationContainer",
+      true
+    );
+
+    return (
+      <div>
+        <h2>{ops.size} endpoints</h2>
+        {ops
+          .map((op, index) => {
+            const path = op.get("path");
+            const method = op.get("method");
+            const specPath = List(["paths", path, method]);
+
+            // FIXME: (someday) this logic should probably be in a selector,
+            // but doing so would require further opening up
+            // selectors to the plugin system, to allow for dynamic
+            // overriding of low-level selectors that other selectors
+            // rely on. --KS, 12/17
+            const validMethods = specSelectors.isOAS3()
+              ? OAS3_OPERATION_METHODS
+              : SWAGGER2_OPERATION_METHODS;
+
+            if (validMethods.indexOf(method) === -1) {
+              return null;
+            }
+
+            return (
+              <OperationContainer
+                key={`${path}-${method}-endpoints`}
+                specPath={specPath}
+                op={op}
+                path={path}
+                method={method}
+              />
+            );
+          })
+          .toArray()}
       </div>
     );
   }

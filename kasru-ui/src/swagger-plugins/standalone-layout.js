@@ -29,12 +29,19 @@ import "brace/keybinding/vim";
 
 import SpecSelect from "./components/spec-select-next";
 import PageGDrive from "./components/page-gapi-drive";
-import {doAfterLoggedIn, pickFile} from './utils/gdrive';
+import { doAfterLoggedIn, pickFile, getImageLink } from "./utils/gdrive";
 
 const MODE_SPEC = "spec";
 const MODE_SPEC_READ_ONLY = "spec_read";
 const MODE_STUB = "stub";
 const MODE_TEST = "test";
+
+function DisplayForEdit({ mode, children }) {
+  if (mode !== MODE_SPEC_READ_ONLY) {
+    return children;
+  }
+  return null;
+}
 
 class UnitSpecNavigation extends Component {
   constructor(props) {
@@ -75,45 +82,69 @@ class UnitSpecNavigation extends Component {
   };
 
   gdriveInsertUrl = () => {
-    doAfterLoggedIn((authInstance) => {
+    doAfterLoggedIn(authInstance => {
       const authResult = authInstance.currentUser.get().getAuthResponse(true);
-      pickFile(authResult.access_token, (pickResult) => {
-        console.info(pickResult);
-      })
-    })
-  }
+      pickFile(authResult.access_token, pickResult => {
+        if (pickResult.action === window.google.picker.Action.PICKED) {
+          const item = pickResult.docs[0];
+          this.props.uiActions.gdriveInsertLink(getImageLink(item.id));
+        }
+      });
+    });
+  };
 
   render() {
     const { specName, specActions, mode, specSelectors } = this.props;
     const notify = this.props.swmbSelectors.upstreamNotify();
     const specUpstream = specSelectors.specUpstream();
+    const viewMode = this.props.uiSelectors.currentView();
 
     return (
       <List horizontal relaxed style={{ marginBottom: 0 }}>
-        <List.Item>
-          <Button
-            color="green"
-            onClick={this.props.onClickTopTitle}
-            style={{
-              maxWidth: "20em",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
-            }}
-          >
-            <Icon name="bars" /> {specName}
-          </Button>
-          {["gist", "gdrive"].indexOf(specUpstream) > -1 && (
-            <Button onClick={this.commitUpstream} title="⌘-shift-S">
-              <Icon name="cloud upload" /> Commit
+        {viewMode === MODE_SPEC_READ_ONLY && (
+          <List.Item>
+            <Button
+              color="green"
+              style={{
+                maxWidth: "20em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              <Icon name="bars" /> {specName}
             </Button>
-          )}
-          {["gdrive"].indexOf(specUpstream) > -1 && (
-            <Button onClick={this.gdriveInsertUrl}>
-              <Icon name="attach" /> Insert URL
+            <Button color="orange" onClick={() => {
+              this.switchMode(MODE_SPEC);
+            }}>Edit</Button>
+          </List.Item>
+        )}
+        <DisplayForEdit mode={viewMode}>
+          <List.Item>
+            <Button
+              color="green"
+              onClick={this.props.onClickTopTitle}
+              style={{
+                maxWidth: "20em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              <Icon name="bars" /> {specName}
             </Button>
-          )}
-        </List.Item>
+            {["gist", "gdrive"].indexOf(specUpstream) > -1 && (
+              <Button onClick={this.commitUpstream} title="⌘-shift-S">
+                <Icon name="cloud upload" /> Commit
+              </Button>
+            )}
+            {["gdrive"].indexOf(specUpstream) > -1 && (
+              <Button onClick={this.gdriveInsertUrl}>
+                <Icon name="attach" /> Insert URL
+              </Button>
+            )}
+          </List.Item>
+        </DisplayForEdit>
         {notify.get("havingUpdate") && (
           <List.Item>
             <Popup
@@ -138,69 +169,71 @@ class UnitSpecNavigation extends Component {
             />
           </List.Item>
         )}
-        <List.Item>
-          <Button.Group style={{ marginRight: "0.1em" }}>
-            <Button
+        <DisplayForEdit mode={viewMode}>
+          <List.Item>
+            <Button.Group style={{ marginRight: "0.1em" }}>
+              <Button
+                toggle
+                active={mode === MODE_SPEC}
+                onClick={this.switchMode.bind(this, MODE_SPEC)}
+              >
+                SPEC
+              </Button>
+              <Clipboard
+                option-text={this.copySpec}
+                className="ui icon toggle button"
+                button-title="Copy to clipboard"
+              >
+                <Icon name="clipboard" />
+              </Clipboard>
+            </Button.Group>{" "}
+            <Button.Group style={{ marginLeft: "0.1em", marginRight: "0.1em" }}>
+              <Button
+                toggle
+                active={mode === MODE_STUB}
+                onClick={this.switchMode.bind(this, MODE_STUB)}
+              >
+                STUB
+              </Button>
+              <Clipboard
+                option-text={this.copyStub}
+                className="ui icon toggle button"
+                button-title="Copy to clipboard"
+              >
+                <Icon name="clipboard" />
+              </Clipboard>
+            </Button.Group>{" "}
+            <Button.Group style={{ marginLeft: "0.1em" }}>
+              <Button
+                toggle
+                active={mode === MODE_TEST}
+                onClick={this.switchMode.bind(this, MODE_TEST)}
+              >
+                TEST
+              </Button>
+              <Clipboard
+                option-text={this.copyTest}
+                className="ui icon toggle button"
+                button-title="Copy to clipboard"
+              >
+                <Icon name="clipboard" />
+              </Clipboard>
+            </Button.Group>
+            <Label title="Session id">
+              <Icon name="id badge" />
+              {this.props.session}
+            </Label>
+            <Radio
               toggle
-              active={mode === MODE_SPEC}
-              onClick={this.switchMode.bind(this, MODE_SPEC)}
-            >
-              SPEC
-            </Button>
-            <Clipboard
-              option-text={this.copySpec}
-              className="ui icon toggle button"
-              button-title="Copy to clipboard"
-            >
-              <Icon name="clipboard" />
-            </Clipboard>
-          </Button.Group>{" "}
-          <Button.Group style={{ marginLeft: "0.1em", marginRight: "0.1em" }}>
-            <Button
-              toggle
-              active={mode === MODE_STUB}
-              onClick={this.switchMode.bind(this, MODE_STUB)}
-            >
-              STUB
-            </Button>
-            <Clipboard
-              option-text={this.copyStub}
-              className="ui icon toggle button"
-              button-title="Copy to clipboard"
-            >
-              <Icon name="clipboard" />
-            </Clipboard>
-          </Button.Group>{" "}
-          <Button.Group style={{ marginLeft: "0.1em" }}>
-            <Button
-              toggle
-              active={mode === MODE_TEST}
-              onClick={this.switchMode.bind(this, MODE_TEST)}
-            >
-              TEST
-            </Button>
-            <Clipboard
-              option-text={this.copyTest}
-              className="ui icon toggle button"
-              button-title="Copy to clipboard"
-            >
-              <Icon name="clipboard" />
-            </Clipboard>
-          </Button.Group>
-          <Label title="Session id">
-            <Icon name="id badge" />
-            {this.props.session}
-          </Label>
-          <Radio
-            toggle
-            fitted
-            label="VIM"
-            style={{ marginLeft: "0.5em" }}
-            onChange={(e, data) => {
-              this.toggleVimMode(data.checked);
-            }}
-          />
-        </List.Item>
+              fitted
+              label="VIM"
+              style={{ marginLeft: "0.5em" }}
+              onChange={(e, data) => {
+                this.toggleVimMode(data.checked);
+              }}
+            />
+          </List.Item>
+        </DisplayForEdit>
       </List>
     );
   }

@@ -22,6 +22,7 @@ import testSchedule from "./state/test-schedule";
 import wrapInfo from "./components/make-info-login-form";
 import wrapOperations from "./components/wrap-operation-views";
 import wrapOperationSummary from './components/wrap-operation-summary';
+import wrapHighlightCode from './components/wrap-highlight-code';
 
 let StubEditor = makeEditor({
   editorPluginsToRun: ["gutterClick", "pasteHandler"]
@@ -72,6 +73,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       info: wrapInfo,
       operations: wrapOperations,
       OperationSummary: wrapOperationSummary,
+      highlightCode: wrapHighlightCode,
     },
     components: {
       StandaloneLayout,
@@ -308,6 +310,13 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
                 value
               }
             };
+          },
+          gdriveInsertLink(url) {
+            specEditorInstance.insert(url);
+            return {
+              type: 'SWMB/UI/GDRIVE_INSERT_LINK',
+              payload: {link: url},
+            };
           }
         },
         reducers: {
@@ -321,7 +330,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               match,
               specName,
               ops: fromJS({
-                view: query.opsView || "tags",
+                view: query.opsView || "endpoints",
                 filters: {
                   tickets: (query.tickets || "").split(","),
                   tags: (query.tags || "").split(",")
@@ -340,13 +349,13 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
         },
         selectors: {
           currentView(state) {
-            return state.get("editorView", "spec");
+            return state.get("editorView", "spec_read");
           },
           ops(state) {
             return state.get(
               "ops",
               fromJS({
-                view: "tags",
+                view: "endpoints",
                 filters: { tickets: [], tags: [] }
               })
             );
