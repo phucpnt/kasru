@@ -96,7 +96,7 @@ class PageGDrive extends Component {
       pickSpec(authResult.access_token, pickResult => {
         console.info("pick", pickResult);
         if (pickResult.action === 'picked') {
-          history.push(`/gdrive:${pickResult.docs[0].id}/spec`);
+          history.push(`/gdrive:${pickResult.docs[0].id}/${this.props.viewMode}`);
         }
       });
     });
@@ -110,5 +110,9 @@ class PageGDrive extends Component {
     );
   }
 }
+
+PageGDrive.defaultProps = {
+  viewMode: 'spec_read',
+};
 
 export default withRouter(PageGDrive);

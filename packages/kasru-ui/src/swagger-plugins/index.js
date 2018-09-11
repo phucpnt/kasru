@@ -308,6 +308,13 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
                 value
               }
             };
+          },
+          gdriveInsertLink(url) {
+            specEditorInstance.insert(url);
+            return {
+              type: 'SWMB/UI/GDRIVE_INSERT_LINK',
+              payload: {link: url},
+            };
           }
         },
         reducers: {
@@ -321,7 +328,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
               match,
               specName,
               ops: fromJS({
-                view: query.opsView || "tags",
+                view: query.opsView || "endpoints",
                 filters: {
                   tickets: (query.tickets || "").split(","),
                   tags: (query.tags || "").split(",")
@@ -340,13 +347,13 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
         },
         selectors: {
           currentView(state) {
-            return state.get("editorView", "spec");
+            return state.get("editorView", "spec_read");
           },
           ops(state) {
             return state.get(
               "ops",
               fromJS({
-                view: "tags",
+                view: "endpoints",
                 filters: { tickets: [], tags: [] }
               })
             );
