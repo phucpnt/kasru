@@ -38,14 +38,19 @@ export function pickSpec(oauthToken, callback) {
   gapi.load("picker", {
     callback: () => {
       const google = window.google;
+      const teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+      teamView.setEnableTeamDrives(true);
+      teamView.setMimeTypes(gdocMimeType);
+      teamView.setQuery("title:.yaml");
+
       const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
-      view.setEnableTeamDrives(true);
       view.setMimeTypes(gdocMimeType);
       view.setQuery("title:.yaml");
       const picker = new google.picker.PickerBuilder()
         .setAppId(PROJ_NUMBER)
         .setOAuthToken(oauthToken)
         .addView(view)
+        .addView(teamView)
         .addView(new google.picker.DocsUploadView())
         .setDeveloperKey(API_KEY)
         .setCallback(callback)
@@ -61,21 +66,36 @@ export function pickFile(oauthToken, callback) {
     callback: () => {
       const google = window.google;
       const viewFiles = new google.picker.DocsView(google.picker.ViewId.DOCS);
-      viewFiles.setEnableTeamDrives(true);
       viewFiles.setSelectFolderEnabled(true);
       viewFiles.setIncludeFolders(true);
+
+      const teamViewFiles = new google.picker.DocsView(google.picker.ViewId.DOCS);
+      teamViewFiles.setEnableTeamDrives(true);
+      teamViewFiles.setSelectFolderEnabled(true);
+      teamViewFiles.setIncludeFolders(true);
+
       const viewImages = new google.picker.DocsView(
         google.picker.ViewId.DOCS_IMAGES
       );
       viewImages.setEnableTeamDrives(true);
       viewImages.setSelectFolderEnabled(true);
       viewImages.setIncludeFolders(true);
+
+      const teamViewImages = new google.picker.DocsView(
+        google.picker.ViewId.DOCS_IMAGES
+      );
+      teamViewImages.setEnableTeamDrives(true);
+      teamViewImages.setSelectFolderEnabled(true);
+      teamViewImages.setIncludeFolders(true);
+
       const picker = new google.picker.PickerBuilder()
         .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
         .setAppId(PROJ_NUMBER)
         .setOAuthToken(oauthToken)
         .addView(viewFiles)
         .addView(viewImages)
+        .addView(teamViewFiles)
+        .addView(teamViewImages)
         .addView(new google.picker.DocsUploadView())
         .setDeveloperKey(API_KEY)
         .setCallback(callback)
