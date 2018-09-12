@@ -71,7 +71,7 @@ class PageGDrive extends Component {
         <Button onClick={this.loginToGDrive} size="huge" color="blue">Login to Google Drive</Button>
         <h3>Follow the steps below</h3>
         {this.renderGuideToLogin()}
-        <h4>Refresh this page after Login</h4>
+        <h4>After login, you can choose spec file to open</h4>
       </div>
     );
   }
