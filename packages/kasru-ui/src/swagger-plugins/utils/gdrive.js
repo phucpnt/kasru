@@ -7,12 +7,13 @@ const DRIVE_SCOPE = [
 ].join(" ");
 const gdocMimeType = "text/plain";
 
-export function loginGDrive() {
+export function loginGDrive(callback) {
   const gapi = window.gapi;
   return new Promise(resolve => {
     gapi.load("client:auth2", () => {
       if (gapi.auth2.getAuthInstance() && gapi.auth2.getAuthInstance().isSignedIn.get()) {
         resolve(gapi.auth2.getAuthInstance());
+        callback && callback(gapi.auth2.getAuthInstance());
       } else {
         gapi.client
           .init({
@@ -25,6 +26,7 @@ export function loginGDrive() {
           })
           .then(() => {
             resolve(gapi.auth2.getAuthInstance());
+            callback && callback(gapi.auth2.getAuthInstance());
           });
       }
     });
