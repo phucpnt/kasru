@@ -113,8 +113,7 @@ function uploadToGDrive(fileId, { spec, stub, test }) {
     new File(
       [
         JSON.stringify({
-          name: "test-spec.yaml",
-          mimeType: "text/plain"
+          mimeType: "text/plain",
         })
       ],
       "meta.json",
