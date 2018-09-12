@@ -39,6 +39,7 @@ export function pickSpec(oauthToken, callback) {
     callback: () => {
       const google = window.google;
       const view = new google.picker.View(google.picker.ViewId.DOCS);
+      view.setEnableTeamDrives(true);
       view.setMimeTypes(gdocMimeType);
       view.setQuery("title:.yaml");
       const picker = new google.picker.PickerBuilder()
@@ -60,13 +61,15 @@ export function pickFile(oauthToken, callback) {
     callback: () => {
       const google = window.google;
       const viewFiles = new google.picker.DocsView(google.picker.ViewId.DOCS);
-      viewFiles.setSelectFolderEnabled(true)	
-      viewFiles.setIncludeFolders(true)	
+      viewFiles.setEnableTeamDrives(true);
+      viewFiles.setSelectFolderEnabled(true);
+      viewFiles.setIncludeFolders(true);
       const viewImages = new google.picker.DocsView(
         google.picker.ViewId.DOCS_IMAGES
       );
-      viewImages.setSelectFolderEnabled(true)	
-      viewImages.setIncludeFolders(true)	
+      viewImages.setEnableTeamDrives(true);
+      viewImages.setSelectFolderEnabled(true);
+      viewImages.setIncludeFolders(true);
       const picker = new google.picker.PickerBuilder()
         .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
         .setAppId(PROJ_NUMBER)
