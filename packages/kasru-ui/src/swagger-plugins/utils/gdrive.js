@@ -38,7 +38,7 @@ export function pickSpec(oauthToken, callback) {
   gapi.load("picker", {
     callback: () => {
       const google = window.google;
-      const view = new google.picker.View(google.picker.ViewId.DOCS);
+      const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
       view.setEnableTeamDrives(true);
       view.setMimeTypes(gdocMimeType);
       view.setQuery("title:.yaml");
