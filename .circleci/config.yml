@@ -46,4 +46,11 @@ jobs:
           docker login -u $DOCKER_USER -p $DOCKER_PASS         # (5)
           docker push phucpnt/kasru:$TAG
           docker push phucpnt/kasru:latest
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:a+08BGRXlJme5XMXG/EUne7QyZiGPhKimez/HNjPaV0"
+      - run:
+          name: Deploy to server
+          command:
+            ssh $SSH_USER@SSH_HOST "cd $SSH_FOLDER && docker-compose stop kasru && docker-compose update kasru && docker-compose up kasru"
 

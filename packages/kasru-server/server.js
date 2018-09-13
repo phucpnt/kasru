@@ -9,7 +9,7 @@ const fs = require("fs-extra");
 const routeSwaggerSpec = require("./src/swagger-spec");
 const routeConnect = require('./src/connect');
 const routeGDrive = require('./src/connect-gdrive');
-const { DIR_SPEC } = require("./global-var");
+const { DIR_SPEC, GDRIVE_CLIENT_ID, GDRIVE_API_KEY, GDRIVE_PROJECT_ID } = require("./global-var");
 
 const PORT = process.env.NODE_PORT || 3003;
 
@@ -34,7 +34,15 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.get("/", function(req, res) {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+  let pageHtml = fs.readFileSync(path.join(__dirname, "build", "index.html"));
+  pageHtml = pageHtml.replace('insert_global_variable', `
+    window.GDRIVE_CLIENT_ID = "${GDRIVE_CLIENT_ID}";
+    window.API_KEY="${GDRIVE_API_KEY}";
+    window.PROJ_NUMBER="${GDRIVE_PROJECT_ID}";
+  `)
+  res.header({'content-type': 'text/html'});
+  res.send(pageHtml);
+  res.end();
 });
 
 app.use("/swagger-spec", routeSwaggerSpec);
