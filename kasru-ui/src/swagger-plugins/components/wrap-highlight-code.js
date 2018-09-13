@@ -18,7 +18,7 @@ export default function wrapResponseBody(HighlightCode, system) {
               minLines: 2,
               maxLines: Infinity,
               autoScrollEditorIntoView: true,
-              showGutter: false,
+              showLineNumbers: false,
               readOnly: true
             }}
             value={this.props.value}
