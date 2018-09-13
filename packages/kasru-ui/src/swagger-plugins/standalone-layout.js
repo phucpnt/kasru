@@ -262,7 +262,8 @@ export default class StandaloneLayout extends React.Component {
     this.state = {
       showCreateForm: false,
       newSpecName: "",
-      displayLeftSidebar: false
+      displayLeftSidebar: false,
+      isPersisting: false,
     };
   }
 
@@ -287,6 +288,7 @@ export default class StandaloneLayout extends React.Component {
 
   persistFromUpstream = () => {
     console.info("pesist...");
+    this.setState({isPersisting: true});
     return this.props.swmbActions.persistFromUpstream(
       this.props.specSelectors.specName()
     );
@@ -298,25 +300,27 @@ export default class StandaloneLayout extends React.Component {
       return (
         <Portal
           open={notify.get("display")}
-          onClose={() => this.props.swmbActions.notifyUpstreamDismiss()}
+          closeOnDocumentClick={false}
+          closeOnEscape={false}
         >
           <Segment
-            color="orange"
+            color="green"
             inverted
             style={{
-              right: "20px",
+              left: "calc(50% + 20px)",
               position: "fixed",
-              top: "60px",
+              top: "80px",
               zIndex: 1000
             }}
           >
-            <Header>There are updates on upstream.</Header>
+            <Header>There are updates on this spec.</Header>
             <div className="clearfix">
               <Popup
                 trigger={
                   <Button
-                    color="grey"
+                    color="white"
                     floated="right"
+                    loading={this.state.isPersisting}
                     onClick={this.persistFromUpstream}
                   >
                     Apply Update
@@ -325,8 +329,6 @@ export default class StandaloneLayout extends React.Component {
                 content="your current modification will be lost. You may consider copy your setup, refresh the page, then click this button. "
               />
             </div>
-            <p>Please check the spec source code on repo.</p>
-            <p>Click any where outside to close this window.</p>
           </Segment>
         </Portal>
       );

@@ -112,60 +112,66 @@ function getSpecFromGdrive(fileId) {
                   stub: JSON.stringify(objContent.stub)
                 }
               });
-            })
+            });
         });
       });
   });
 }
 
 function uploadToGDrive(fileId, { spec, stub, test }) {
-  const gapi = window.gapi;
-  const form = new FormData();
-  form.append(
-    "meta",
-    new File(
-      [
-        JSON.stringify({
-          mimeType: "text/plain"
-        })
-      ],
-      "meta.json",
-      {
-        type: "application/json"
-      }
-    )
-  );
-  form.append(
-    "media",
-    new File(
-      [
-        yaml.dump({
-          description: `Probably you dont want to edit this file directly. Latest updates on ${Date().toString()}.`,
-          spec,
-          stub,
-          test
-        })
-      ],
-      "test-spec.yaml",
-      {
-        type: "text/plain"
-      }
-    )
-  );
+  return new Promise(resolve => {
+    doAfterLoggedIn(() => {
+      const gapi = window.gapi;
+      const form = new FormData();
+      form.append(
+        "meta",
+        new File(
+          [
+            JSON.stringify({
+              mimeType: "text/plain"
+            })
+          ],
+          "meta.json",
+          {
+            type: "application/json"
+          }
+        )
+      );
+      form.append(
+        "media",
+        new File(
+          [
+            yaml.dump({
+              description: `Probably you dont want to edit this file directly. Latest updates on ${Date().toString()}.`,
+              spec,
+              stub,
+              test
+            })
+          ],
+          "test-spec.yaml",
+          {
+            type: "text/plain"
+          }
+        )
+      );
 
-  const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
-  const authResult = userInstance.getAuthResponse(true);
+      const userInstance = gapi.auth2.getAuthInstance().currentUser.get();
+      const authResult = userInstance.getAuthResponse(true);
 
-  return fetch(
-    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
-    {
-      method: "PATCH",
-      headers: {
-        authorization: "Bearer " + authResult.access_token
-      },
-      body: form
-    }
-  ).then(res => res.json());
+      return fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+        {
+          method: "PATCH",
+          headers: {
+            authorization: "Bearer " + authResult.access_token
+          },
+          body: form
+        }
+      )
+        .then(res => res.json())
+        .then(result => resolve(result));
+    });
+  });
 }
 
 function getSpec(specName) {
