@@ -448,6 +448,11 @@ function SocialNetworkConnector(props) {
 }
 
 export class UnitSpecScreen extends Component {
+  constructor(props){
+    super(props);
+    this.tidPeriodCheckUpdate = 0;
+  }
+
   componentDidMount() {
     const { specName, mode } = this.props.match.params;
     this.props.uiActions.handleLocationChange({
@@ -456,6 +461,14 @@ export class UnitSpecScreen extends Component {
     });
     this.props.uiActions.switchEditorView(mode);
     this.props.specActions.fetchRemoteContent(specName);
+
+    this.tidPeriodCheckUpdate = window.setInterval(() => {
+      this.props.specActions.fetchRemoteContent(specName);
+    }, 10 * 60 * 1000);
+  }
+
+  componentWillUnmount(){
+    window.clearInterval(this.tidPeriodCheckUpdate);
   }
 
   componentDidUpdate(prevProps) {
