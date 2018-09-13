@@ -47,6 +47,7 @@ export function pickSpec(oauthToken, callback) {
       view.setMimeTypes(gdocMimeType);
       view.setQuery("title:.yaml");
       const picker = new google.picker.PickerBuilder()
+        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
         .setAppId(PROJ_NUMBER)
         .setOAuthToken(oauthToken)
         .addView(view)
@@ -120,5 +121,5 @@ export function doAfterLoggedIn(callback) {
 }
 
 export function getImageLink(fileId){
-  return `https://drive.google.com/uc?id=${fileId}&__type=.png`;
+  return `https://drive.google.com/uc?export=view&id=${fileId}&__type=.png`;
 }

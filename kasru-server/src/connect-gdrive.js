@@ -49,7 +49,7 @@ router.get('/oauthcallback', async (req, res) => {
   res.end();
 })
 
-router.get('/get-file/:fileId', async(req, res) => {
+router.get('/get-file/:fileId', (req, res) => {
   const fileId = req.params.fileId;
   const oauth2Client = getOAuthClient(req);
   oauth2Client.setCredentials({
@@ -61,15 +61,31 @@ router.get('/get-file/:fileId', async(req, res) => {
     auth: oauth2Client,
   });
 
-  gdrive.files.get({
+  gdrive.permissions.list({
     fileId: fileId,
     supportsTeamDrives: true,
-    alt: 'media',
+    pageSize: 100,
   }).then(response => {
-    res.header({'content-type': response.headers['content-type']});
-    res.status(response.status).send(response.data);
+    const canViewWithoutLogin = response.data.permissions.some(pem => ['domain' || 'anyone'].indexOf(pem.type) > -1 );
+    if(!canViewWithoutLogin){
+      res.status(403);
+      throw new Error("Permission denied")
+    }
+  }).then(() => {
+    gdrive.files.get({
+      fileId: fileId,
+      supportsTeamDrives: true,
+      alt: 'media',
+    }).then(response => {
+      res.header({'content-type': response.headers['content-type']});
+      res.status(response.status).send(response.data);
+      res.end();
+    })
+  }).catch(err => {
+    res.send(err.toString());
     res.end();
-  })
+  });
+
 }) 
 
 module.exports = router;

@@ -78,30 +78,43 @@ function getSpecFromServer(specName) {
 
 function getSpecFromGdrive(fileId) {
   return new Promise(resolve => {
-    doAfterLoggedIn(authInstance => {
-      const userInstance = authInstance.currentUser.get();
-      const authResult = userInstance.getAuthResponse(true);
-      const mimeType = encodeURIComponent("text/plain");
-      return fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-        {
-          method: "GET",
-          headers: {
-            authorization: "Bearer " + authResult.access_token
+    fetch(`${API_HOST}/gdrive/get-file/${fileId}`)
+      .then(res => res.text())
+      .then(yamlStr => {
+        const objContent = yaml.load(yamlStr);
+        resolve({
+          data: {
+            content: objContent.spec,
+            stub: JSON.stringify(objContent.stub)
           }
-        }
-      )
-        .then(res => res.text())
-        .then(yamlStr => {
-          const objContent = yaml.load(yamlStr);
-          resolve({
-            data: {
-              content: objContent.spec,
-              stub: JSON.stringify(objContent.stub)
-            }
-          });
         });
-    });
+      })
+      .catch(err => {
+        doAfterLoggedIn(authInstance => {
+          const userInstance = authInstance.currentUser.get();
+          const authResult = userInstance.getAuthResponse(true);
+          const mimeType = encodeURIComponent("text/plain");
+          return fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+            {
+              method: "GET",
+              headers: {
+                authorization: "Bearer " + authResult.access_token
+              }
+            }
+          )
+            .then(res => res.text())
+            .then(yamlStr => {
+              const objContent = yaml.load(yamlStr);
+              resolve({
+                data: {
+                  content: objContent.spec,
+                  stub: JSON.stringify(objContent.stub)
+                }
+              });
+            })
+        });
+      });
   });
 }
 
@@ -113,7 +126,7 @@ function uploadToGDrive(fileId, { spec, stub, test }) {
     new File(
       [
         JSON.stringify({
-          mimeType: "text/plain",
+          mimeType: "text/plain"
         })
       ],
       "meta.json",
@@ -367,7 +380,7 @@ export default function definePlugin({ getSystem }) {
               uploadToGDrive(resourceId, {
                 spec: specContent,
                 stub: [],
-                test: [],
+                test: []
               }).then(result => {
                 console.info(result);
               });
