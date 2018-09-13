@@ -8,6 +8,7 @@ const fs = require("fs-extra");
 
 const routeSwaggerSpec = require("./src/swagger-spec");
 const routeConnect = require('./src/connect');
+const routeGDrive = require('./src/connect-gdrive');
 const { DIR_SPEC } = require("./global-var");
 
 const PORT = process.env.NODE_PORT || 3003;
@@ -38,6 +39,7 @@ app.get("/", function(req, res) {
 
 app.use("/swagger-spec", routeSwaggerSpec);
 app.use('/connect', routeConnect);
+app.use('/gdrive', routeGDrive);
 
 
 app.use("/mb/:port(\\d+)", (req, res, next) => {
