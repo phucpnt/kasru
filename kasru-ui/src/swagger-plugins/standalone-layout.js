@@ -289,6 +289,8 @@ export default class StandaloneLayout extends React.Component {
   persistFromUpstream = () => {
     console.info("pesist...");
     this.setState({isPersisting: true});
+    // FIXME: work around
+    window.setTimeout(() => {this.setState({isPersisting: false})}, 5 * 1000);
     return this.props.swmbActions.persistFromUpstream(
       this.props.specSelectors.specName()
     );
@@ -304,7 +306,8 @@ export default class StandaloneLayout extends React.Component {
           closeOnEscape={false}
         >
           <Segment
-            color="green"
+            color="red"
+            size="massive"
             inverted
             style={{
               left: "calc(50% + 20px)",
