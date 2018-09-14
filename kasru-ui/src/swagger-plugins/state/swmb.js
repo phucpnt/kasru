@@ -5,7 +5,7 @@ import debounce from "lodash/debounce";
 import yaml from "js-yaml";
 
 import { API_HOST } from "../global-vars";
-import { doAfterLoggedIn } from "../utils/gdrive";
+import { doAfterLoggedIn, loginGDrive } from "../utils/gdrive";
 
 const burstCache = () =>
   Math.random()
@@ -76,45 +76,57 @@ function getSpecFromServer(specName) {
   ).then(res => res.json());
 }
 
+function clientGetContentFromGDrive(authInstance, fileId) {
+  const userInstance = authInstance.currentUser.get();
+  const authResult = userInstance.getAuthResponse(true);
+  return fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    {
+      method: "GET",
+      headers: {
+        authorization: "Bearer " + authResult.access_token
+      }
+    }
+  )
+    .then(res => res.text())
+    .then(yamlStr => {
+      const objContent = yaml.load(yamlStr);
+      return {
+        data: {
+          content: objContent.spec,
+          stub: JSON.stringify(objContent.stub)
+        }
+      };
+    });
+}
+
 function getSpecFromGdrive(fileId) {
   return new Promise(resolve => {
-    fetch(`${API_HOST}/gdrive/get-file/${fileId}`)
-      .then(res => res.text())
-      .then(yamlStr => {
-        const objContent = yaml.load(yamlStr);
-        resolve({
-          data: {
-            content: objContent.spec,
-            stub: JSON.stringify(objContent.stub)
-          }
-        });
-      })
-      .catch(err => {
-        doAfterLoggedIn(authInstance => {
-          const userInstance = authInstance.currentUser.get();
-          const authResult = userInstance.getAuthResponse(true);
-          const mimeType = encodeURIComponent("text/plain");
-          return fetch(
-            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-            {
-              method: "GET",
-              headers: {
-                authorization: "Bearer " + authResult.access_token
+    loginGDrive().then(authInstance => {
+      const isSignedIn = authInstance.isSignedIn.get();
+      if (isSignedIn) {
+        clientGetContentFromGDrive(authInstance, fileId).then(resolve);
+      } else {
+        fetch(`${API_HOST}/gdrive/get-file/${fileId}`)
+          .then(res => res.text())
+          .then(yamlStr => {
+            const objContent = yaml.load(yamlStr);
+            resolve({
+              data: {
+                content: objContent.spec,
+                stub: JSON.stringify(objContent.stub)
               }
-            }
-          )
-            .then(res => res.text())
-            .then(yamlStr => {
-              const objContent = yaml.load(yamlStr);
-              resolve({
-                data: {
-                  content: objContent.spec,
-                  stub: JSON.stringify(objContent.stub)
-                }
-              });
             });
-        });
-      });
+          })
+          .catch(err => {
+            doAfterLoggedIn(authInstance => {
+              clientGetContentFromGDrive(authInstance, fileId).then(response =>
+                resolve(response)
+              );
+            });
+          });
+      }
+    });
   });
 }
 
