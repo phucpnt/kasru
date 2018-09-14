@@ -428,7 +428,7 @@ export default class Topbar extends React.Component {
         <div className="topbar">
           <div className="topbar-wrapper">
             {this.props.children}
-            {showServersMenu ? (
+            {false && showServersMenu ? (
               <DropdownMenu
                 className="long"
                 {...makeMenuOptions("Generate Server")}
@@ -454,7 +454,7 @@ export default class Topbar extends React.Component {
                 ))}
               </DropdownMenu>
             ) : null}
-            {showClientsMenu ? (
+            {false && showClientsMenu ? (
               <DropdownMenu
                 className="long"
                 {...makeMenuOptions("Generate Client")}
@@ -480,6 +480,7 @@ export default class Topbar extends React.Component {
                 ))}
               </DropdownMenu>
             ) : null}
+            {false && 
             <div style={{ marginLeft: "auto" }}>
               {mockUrn() === undefined && (
                 <Button
@@ -496,6 +497,7 @@ export default class Topbar extends React.Component {
                 </Button>
               )}
             </div>
+            }
           </div>
         </div>
         <Modal className="swagger-ui modal" ref="modal">

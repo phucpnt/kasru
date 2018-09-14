@@ -25,6 +25,7 @@
     "semantic-ui-react": "^0.81.3",
     "swagger-client": "^3.8.13",
     "swagger-editor": "^3.6.8",
+    "uri-js": "^4.2.2",
     "yaml-js": "0.2.3"
   },
   "scripts": {

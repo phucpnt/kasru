@@ -386,7 +386,7 @@ export default class StandaloneLayout extends React.Component {
             />
           </Sidebar>
           <Sidebar.Pusher id="app-content">
-            <Topbar>
+            <Topbar showServersMenu={false} showClientsMenu={false}>
               <RouteUnitSpecNavigation
                 onClickTopTitle={this.toggleLeftSidebar}
                 specName={specName}
@@ -415,12 +415,7 @@ export default class StandaloneLayout extends React.Component {
               <Route path={`/:specName/:mode`} component={UnitSpecScreen} />
               <Route
                 component={() => (
-                  <div>
-                    <PageGDrive />
-                  </div>
-                  // <Header as="h2" textAlign="center" disabled>
-                  //   Please choose spec
-                  // </Header>
+                  <PageGDrive />
                 )}
               />
             </Switch>

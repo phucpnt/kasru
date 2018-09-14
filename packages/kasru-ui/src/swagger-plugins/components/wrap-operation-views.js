@@ -6,10 +6,12 @@ import {
   Label,
   Dropdown,
   Form,
-  Menu
+  Menu,
+  Button
 } from "semantic-ui-react";
 import { List } from "immutable";
 import Clipboard from "react-clipboard.js";
+import { parse } from "uri-js";
 
 const SWAGGER2_OPERATION_METHODS = [
   "get",
@@ -230,9 +232,7 @@ export default function wrapOperations(Operations, system) {
               onClick={this.handleMenuClick}
             />
           </Menu>
-          {activeItem === "endpoints" && (
-            <EndpointOperations {...this.props} />
-          )}
+          {activeItem === "endpoints" && <EndpointOperations {...this.props} />}
           {activeItem === "tickets" && (
             <ByTicketsOperationView {...this.props} />
           )}
@@ -311,8 +311,39 @@ class FilterableOperations extends Component {
 }
 
 class EndpointOperations extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { queryUrl: "", queryOp: null };
+  }
+
+  queryUrl = () => {
+    // let queryUrl = this.state.queryUrl;
+    let queryUrl =
+      "https://qa-apis.sentifi.com/v1/intelligence/message/search/events?mention-topic=272&start-date=2017-09-07&end-date=2018-09-06&group-id=1192&channel=news&impact-id=-1&sort-by=newest-to-oldest";
+    const spec = this.props.specSelectors.specJson();
+    const servers = spec.get("servers", List);
+
+    let validPath = null;
+    servers.forEach(s => {
+      if (queryUrl.indexOf(s.get("url")) === 0) {
+        validPath = queryUrl.replace(s.get("url"), "");
+      }
+    });
+
+    if (validPath === null) {
+      // invalid path
+    } else {
+      const parts = parse(validPath);
+      const ops = this.props.specSelectors.operations();
+      const foundOp = ops.find(op => op.get('method') === 'get' && op.get('path') === parts.path);
+
+      this.setState({ queryOp: foundOp});
+    }
+  };
+
   render() {
     const { specSelectors } = this.props;
+    const { queryOp } = this.state;
     const ops = this.props.specSelectors.operations();
     const OperationContainer = this.props.getComponent(
       "OperationContainer",
@@ -322,6 +353,22 @@ class EndpointOperations extends Component {
     return (
       <div>
         <h2>{ops.size} endpoints</h2>
+        <textarea
+          placeholder="pass your url"
+          style={{ minHeight: "72px", border: "1px solid #eee" }}
+        />
+        <Button onClick={this.queryUrl} style={{ marginBottom: "1.5em" }}>
+          Query & check
+        </Button>
+        {queryOp && (
+          <OperationContainer
+            key={`${queryOp.get('path')}-${queryOp.get('method')}-endpoints-queryurl`}
+            specPath={List(["paths", queryOp.get('path'), queryOp.get('method')])}
+            op={queryOp}
+            path={queryOp.get('path')}
+            method={queryOp.get('method')}
+          />
+        )}
         {ops
           .map((op, index) => {
             const path = op.get("path");
