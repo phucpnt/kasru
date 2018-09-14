@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.get("/", function(req, res) {
-  let pageHtml = fs.readFileSync(path.join(__dirname, "build", "index.html"));
+  let pageHtml = fs.readFileSync(path.join(__dirname, "build", "index.html"), {encoding: 'utf8'});
   pageHtml = pageHtml.replace('insert_global_variable', `
     window.GDRIVE_CLIENT_ID = "${GDRIVE_CLIENT_ID}";
     window.API_KEY="${GDRIVE_API_KEY}";
