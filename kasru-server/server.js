@@ -22,6 +22,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+app.get("/", function(req, res) {
+  let pageHtml = fs.readFileSync(path.join(__dirname, "../kasru-ui/build", "index.html"), {encoding: 'utf8'});
+  pageHtml = pageHtml.replace('insert_global_variable', `
+    window.GDRIVE_CLIENT_ID = "${GDRIVE_CLIENT_ID}";
+    window.API_KEY="${GDRIVE_API_KEY}";
+    window.PROJ_NUMBER="${GDRIVE_PROJECT_ID}";
+  `)
+  res.header({'content-type': 'text/html'});
+  res.send(pageHtml);
+  res.end();
+});
+
 app.use(express.static(path.join(__dirname, "../kasru-ui/build")));
 
 if (process.env.NODE_ENV === "development") {
@@ -33,17 +45,6 @@ if (process.env.NODE_ENV === "development") {
   });
 }
 
-app.get("/", function(req, res) {
-  let pageHtml = fs.readFileSync(path.join(__dirname, "build", "index.html"), {encoding: 'utf8'});
-  pageHtml = pageHtml.replace('insert_global_variable', `
-    window.GDRIVE_CLIENT_ID = "${GDRIVE_CLIENT_ID}";
-    window.API_KEY="${GDRIVE_API_KEY}";
-    window.PROJ_NUMBER="${GDRIVE_PROJECT_ID}";
-  `)
-  res.header({'content-type': 'text/html'});
-  res.send(pageHtml);
-  res.end();
-});
 
 app.use("/swagger-spec", routeSwaggerSpec);
 app.use('/connect', routeConnect);
