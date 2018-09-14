@@ -52,5 +52,5 @@ jobs:
       - run:
           name: Deploy to server
           command:
-            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cd $SSH_FOLDER && docker-compose stop kasru && docker-compose pull kasru && docker-compose up kasru -d"
+            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cd $SSH_FOLDER && docker-compose stop kasru && docker-compose pull kasru && docker-compose up -d kasru"
 
