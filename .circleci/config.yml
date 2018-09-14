@@ -48,7 +48,7 @@ jobs:
           docker push phucpnt/kasru:latest
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:a+08BGRXlJme5XMXG/EUne7QyZiGPhKimez/HNjPaV0"
+            - "8a:c9:46:78:08:c1:37:7f:79:f6:22:6b:b1:5b:48:20"
       - run:
           name: Deploy to server
           command:
