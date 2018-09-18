@@ -23,6 +23,7 @@ import wrapInfo from "./components/make-info-login-form";
 import wrapOperations from "./components/wrap-operation-views";
 import wrapOperationSummary from './components/wrap-operation-summary';
 import wrapHighlightCode from './components/wrap-highlight-code';
+import QuickCheckOperation from './components/quick-check-operation';
 
 let StubEditor = makeEditor({
   editorPluginsToRun: ["gutterClick", "pasteHandler"]
@@ -83,7 +84,8 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       TestEditor,
       UnitSpecScreen,
       SpecLayout,
-      CustomBaseLayout
+      CustomBaseLayout,
+      QuickCheckOperation,
     },
     statePlugins: {
       spec: {
