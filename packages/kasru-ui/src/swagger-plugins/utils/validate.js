@@ -139,3 +139,23 @@ function markSpecAttrRequire(schema) {
   }
   return schema;
 }
+
+export function createSimpleMatchTest(endpointUrl) {
+  const placeholderPatt = /\s*\{\s*([\w\d]+)\}\s*/g;
+  const placeholderId = [];
+  let matched;
+  while ((matched = placeholderPatt.exec(endpointUrl)) !== null) {
+    placeholderId.push(matched[1]);
+  }
+  const patternUrl = endpointUrl.replace(placeholderPatt, "([^\\/]+)");
+  const finRegex = RegExp(patternUrl);
+  return {
+    regex: finRegex,
+    pickInPathVar: urn => {
+      const matched1 = finRegex.exec(urn);
+      return placeholderId.reduce((accum, k, index) => {
+        return Object.assign({}, accum, { [k]: matched1[index + 1] });
+      }, {});
+    }
+  };
+}

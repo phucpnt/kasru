@@ -20,6 +20,7 @@ import { parse } from "uri-js";
 import memoize from "lodash/memoize";
 import { connect } from "react-redux";
 import qs from "query-string";
+import { createSimpleMatchTest } from "../utils/validate";
 
 const SWAGGER2_OPERATION_METHODS = [
   "get",
@@ -343,7 +344,7 @@ class TryItOutEnabledOperationContainer extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { op, queryUrl, specActions, specSelectors, response } = this.props;
+    const { op, queryUrl, specActions, specSelectors, response, queryPath } = this.props;
     const path = op.get("path");
     const method = op.get("method");
     const resolved = this.props.resolvedOp;
@@ -358,21 +359,25 @@ class TryItOutEnabledOperationContainer extends Component {
         true
       );
 
-      Object.keys(parts.query).forEach(k => {
-        const val = parts.query[k];
+      const matcher = createSimpleMatchTest(path);
+      const varsInPath = matcher.pickInPathVar(queryPath);
+      const queryVars = {...parts.query, ...varsInPath };
+
+      Object.keys(queryVars).forEach(k => {
+        const val = queryVars[k];
         this.props.specActions.changeParamByIdentity(
           [path, method],
           resolved
             .get("parameters")
-            .find(p => p.get("in") === "query" && p.get("name") === k),
+            .find(p => p.get("name") === k),
           val,
           false
         );
       });
 
-      this.setState({ isLoading: true });
       specActions.validateParams([path, method]);
       if (specSelectors.validateBeforeExecute([path, method])) {
+        this.setState({ isLoading: true });
         specActions.execute({ operation: resolved, path, method });
       }
     }
@@ -413,7 +418,9 @@ class TryItOutEnabledOperationContainer extends Component {
 
     return (
       <Container fluid>
-        <Loader active={isLoading} inline="centered">Loading</Loader>
+        <Loader active={isLoading} inline="centered">
+          Loading
+        </Loader>
         <OperationContainer {...this.props} getComponent={this.getComponent} />
       </Container>
     );
@@ -439,15 +446,16 @@ const StatefulTryItOutOpContainer = connect((state, ownProps) => {
 class EndpointOperations extends Component {
   constructor(props) {
     super(props);
+    const queryUrl = "";
     this.state = {
-      queryUrl:
-        "https://qa-apis.sentifi.com/v1/intelligence/message/search/events?mention-topic=272&start-date=2017-09-07&end-date=2018-09-06&group-id=1192&channel=news&impact-id=-1&sort-by=newest-to-oldest",
+      queryUrl,
+      inputUrl: queryUrl,
       queryOp: null
     };
   }
 
   queryUrl = () => {
-    let queryUrl = this.state.queryUrl;
+    let queryUrl = this.state.inputUrl;
     const spec = this.props.specSelectors.specJson();
     const servers = spec.get("servers", List);
 
@@ -463,17 +471,24 @@ class EndpointOperations extends Component {
     } else {
       const parts = parse(validPath);
       const ops = this.props.specSelectors.operations();
-      const foundOp = ops.find(
-        op => op.get("method") === "get" && op.get("path") === parts.path
-      );
+      const foundOp = ops.find(op => {
+        return (
+          op.get("method") === "get" &&
+          createSimpleMatchTest(op.get("path")).regex.test(parts.path)
+        );
+      });
 
-      this.setState({ queryOp: foundOp, queryUrl: queryUrl });
+      this.setState({ queryOp: foundOp, queryUrl, queryPath: parts.path });
     }
+  };
+
+  updateInputUrl = e => {
+    this.setState({ inputUrl: e.target.value });
   };
 
   render() {
     const { specSelectors } = this.props;
-    const { queryOp, queryUrl } = this.state;
+    const { queryOp, queryUrl, queryPath } = this.state;
     const ops = this.props.specSelectors.operations();
     const OperationContainer = this.props.getComponent(
       "OperationContainer",
@@ -483,35 +498,54 @@ class EndpointOperations extends Component {
     return (
       <div>
         <h2>{ops.size} endpoints</h2>
-        <textarea
-          placeholder="pass your url"
-          style={{ minHeight: "72px", border: "1px solid #eee" }}
-          value={this.state.queryUrl}
-        />
-        <Button onClick={this.queryUrl} style={{ marginBottom: "1.5em" }}>
-          Query & check
-        </Button>
-        {queryOp && (
-          <StatefulTryItOutOpContainer
-            key={`${queryOp.get("path")}-${queryOp.get(
-              "method"
-            )}-endpoints-queryurl`}
-            specPath={List([
-              "paths",
-              queryOp.get("path"),
-              queryOp.get("method")
-            ])}
-            op={queryOp}
-            queryUrl={queryUrl}
-            path={queryOp.get("path")}
-            method={queryOp.get("method")}
-            tryItOutEnabled={true}
-            getComponent={this.props.getComponent}
-            specActions={this.props.specActions}
-            specSelectors={this.props.specSelectors}
-            layoutActions={this.props.layoutActions}
+        <Container
+          className="endpoint-query-container"
+          fluid
+          style={{ padding: ".5em", background: "#ebe8fd" }}
+        >
+          <strong>Quick check request url</strong>
+          <textarea
+            placeholder="paste your url"
+            style={{ minHeight: "72px", border: "1px solid #eee" }}
+            value={this.state.inputUrl}
+            onChange={this.updateInputUrl}
           />
-        )}
+          <Button
+            color="purple"
+            onClick={this.queryUrl}
+            style={{ marginBottom: "1.5em" }}
+          >
+            Query & check
+          </Button>
+          <Button
+            color="grey"
+            style={{ marginBottom: "1.5em" }}
+          >
+            Clear
+          </Button>
+          {queryOp && (
+            <StatefulTryItOutOpContainer
+              key={`${queryOp.get("path")}-${queryOp.get(
+                "method"
+              )}-endpoints-queryurl`}
+              specPath={List([
+                "paths",
+                queryOp.get("path"),
+                queryOp.get("method")
+              ])}
+              op={queryOp}
+              queryUrl={queryUrl}
+              queryPath={queryPath}
+              path={queryOp.get("path")}
+              method={queryOp.get("method")}
+              tryItOutEnabled={true}
+              getComponent={this.props.getComponent}
+              specActions={this.props.specActions}
+              specSelectors={this.props.specSelectors}
+              layoutActions={this.props.layoutActions}
+            />
+          )}
+        </Container>
         <div className="ui divider" />
         {ops
           .map((op, index) => {

@@ -16,7 +16,7 @@ export default function wrapResponseBody(HighlightCode, system) {
             readOnly
             editorOptions={{
               minLines: 2,
-              maxLines: Infinity,
+              maxLines: 42,
               autoScrollEditorIntoView: true,
               showLineNumbers: false,
               readOnly: true
