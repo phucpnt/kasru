@@ -7,11 +7,19 @@ import {
   Dropdown,
   Form,
   Menu,
-  Button
+  Button,
+  Dimmer,
+  Loader,
+  Container,
+  Segment
 } from "semantic-ui-react";
-import { List } from "immutable";
+import { helpers } from "swagger-client";
+import { List, is } from "immutable";
 import Clipboard from "react-clipboard.js";
 import { parse } from "uri-js";
+import memoize from "lodash/memoize";
+import { connect } from "react-redux";
+import qs from "query-string";
 
 const SWAGGER2_OPERATION_METHODS = [
   "get",
@@ -310,16 +318,136 @@ class FilterableOperations extends Component {
   }
 }
 
+const wrapOperation = memoize(Operation => props => {
+  return (
+    <Operation
+      {...props}
+      operation={props.operation.set("tryItOutEnabled", true)}
+    />
+  );
+});
+
+class TryItOutEnabledOperationContainer extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoading: true
+    };
+  }
+  componentDidMount() {
+    this.props.specActions.requestResolvedSubtree([
+      "paths",
+      this.props.op.get("path"),
+      "get"
+    ]);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { op, queryUrl, specActions, specSelectors, response } = this.props;
+    const path = op.get("path");
+    const method = op.get("method");
+    const resolved = this.props.resolvedOp;
+
+    if (!is(prevProps.resolvedOp, resolved) || prevProps.queryUrl != queryUrl) {
+      console.info("calling execute", queryUrl, resolved);
+      const parts = qs.parseUrl(queryUrl);
+
+      const operationId = helpers.opId(op.get("operation"), path, method);
+      this.props.layoutActions.show(
+        ["operations", undefined, operationId],
+        true
+      );
+
+      Object.keys(parts.query).forEach(k => {
+        const val = parts.query[k];
+        this.props.specActions.changeParamByIdentity(
+          [path, method],
+          resolved
+            .get("parameters")
+            .find(p => p.get("in") === "query" && p.get("name") === k),
+          val,
+          false
+        );
+      });
+
+      this.setState({ isLoading: true });
+      specActions.validateParams([path, method]);
+      if (specSelectors.validateBeforeExecute([path, method])) {
+        specActions.execute({ operation: resolved, path, method });
+      }
+    }
+
+    if (this.state.isLoading && !is(response, prevProps.response)) {
+      this.setState({ isLoading: false });
+    }
+  }
+
+  getComponent = (...args) => {
+    if (args[0] === "operation") {
+      return wrapOperation(this.props.getComponent(...args));
+    } else {
+      return this.props.getComponent(...args);
+    }
+  };
+
+  getResolvedSubtree = () => {
+    const { op } = this.props;
+    const resolved = this.props.specSelectors.specResolvedSubtree(
+      "paths",
+      op.get("path"),
+      op.get("method")
+    );
+    if (!resolved) {
+      return op;
+    }
+    return resolved;
+  };
+
+  render() {
+    const OperationContainer = this.props.getComponent(
+      "OperationContainer",
+      true
+    );
+    const { response } = this.props;
+    const { isLoading } = this.state;
+
+    return (
+      <Container fluid>
+        <Loader active={isLoading} inline="centered">Loading</Loader>
+        <OperationContainer {...this.props} getComponent={this.getComponent} />
+      </Container>
+    );
+  }
+}
+
+const StatefulTryItOutOpContainer = connect((state, ownProps) => {
+  const { op } = ownProps;
+  const path = op.get("path");
+  const method = op.get("method");
+  const resovled = ownProps.specSelectors.specResolvedSubtree([
+    "paths",
+    path,
+    method
+  ]);
+  const response = ownProps.specSelectors.responseFor(path, method);
+  return {
+    resolvedOp: resovled || op,
+    response
+  };
+})(TryItOutEnabledOperationContainer);
+
 class EndpointOperations extends Component {
   constructor(props) {
     super(props);
-    this.state = { queryUrl: "", queryOp: null };
+    this.state = {
+      queryUrl:
+        "https://qa-apis.sentifi.com/v1/intelligence/message/search/events?mention-topic=272&start-date=2017-09-07&end-date=2018-09-06&group-id=1192&channel=news&impact-id=-1&sort-by=newest-to-oldest",
+      queryOp: null
+    };
   }
 
   queryUrl = () => {
-    // let queryUrl = this.state.queryUrl;
-    let queryUrl =
-      "https://qa-apis.sentifi.com/v1/intelligence/message/search/events?mention-topic=272&start-date=2017-09-07&end-date=2018-09-06&group-id=1192&channel=news&impact-id=-1&sort-by=newest-to-oldest";
+    let queryUrl = this.state.queryUrl;
     const spec = this.props.specSelectors.specJson();
     const servers = spec.get("servers", List);
 
@@ -335,15 +463,17 @@ class EndpointOperations extends Component {
     } else {
       const parts = parse(validPath);
       const ops = this.props.specSelectors.operations();
-      const foundOp = ops.find(op => op.get('method') === 'get' && op.get('path') === parts.path);
+      const foundOp = ops.find(
+        op => op.get("method") === "get" && op.get("path") === parts.path
+      );
 
-      this.setState({ queryOp: foundOp});
+      this.setState({ queryOp: foundOp, queryUrl: queryUrl });
     }
   };
 
   render() {
     const { specSelectors } = this.props;
-    const { queryOp } = this.state;
+    const { queryOp, queryUrl } = this.state;
     const ops = this.props.specSelectors.operations();
     const OperationContainer = this.props.getComponent(
       "OperationContainer",
@@ -356,19 +486,33 @@ class EndpointOperations extends Component {
         <textarea
           placeholder="pass your url"
           style={{ minHeight: "72px", border: "1px solid #eee" }}
+          value={this.state.queryUrl}
         />
         <Button onClick={this.queryUrl} style={{ marginBottom: "1.5em" }}>
           Query & check
         </Button>
         {queryOp && (
-          <OperationContainer
-            key={`${queryOp.get('path')}-${queryOp.get('method')}-endpoints-queryurl`}
-            specPath={List(["paths", queryOp.get('path'), queryOp.get('method')])}
+          <StatefulTryItOutOpContainer
+            key={`${queryOp.get("path")}-${queryOp.get(
+              "method"
+            )}-endpoints-queryurl`}
+            specPath={List([
+              "paths",
+              queryOp.get("path"),
+              queryOp.get("method")
+            ])}
             op={queryOp}
-            path={queryOp.get('path')}
-            method={queryOp.get('method')}
+            queryUrl={queryUrl}
+            path={queryOp.get("path")}
+            method={queryOp.get("method")}
+            tryItOutEnabled={true}
+            getComponent={this.props.getComponent}
+            specActions={this.props.specActions}
+            specSelectors={this.props.specSelectors}
+            layoutActions={this.props.layoutActions}
           />
         )}
+        <div className="ui divider" />
         {ops
           .map((op, index) => {
             const path = op.get("path");
