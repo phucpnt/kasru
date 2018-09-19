@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Container, Button, Loader } from "semantic-ui-react";
+import { Container, Button, Loader, Message } from "semantic-ui-react";
 import { helpers } from "swagger-client";
 import { connect } from "react-redux";
 import qs from "query-string";
@@ -148,7 +148,7 @@ export default class QuickCheckOperation extends Component {
   }
 
   queryUrl = () => {
-    let queryUrl = this.state.inputUrl;
+    let queryUrl = this.state.inputUrl.toString().trim();
     const spec = this.props.specSelectors.specJson();
     const servers = spec.get("servers", List);
 
@@ -160,7 +160,7 @@ export default class QuickCheckOperation extends Component {
     });
 
     if (validPath === null) {
-      // invalid path
+      this.setState({error: 'Invalid api url. Please check the available servers in spec.'})
     } else {
       const parts = parse(validPath);
       const ops = this.props.specSelectors.operations();
@@ -171,7 +171,7 @@ export default class QuickCheckOperation extends Component {
         );
       });
 
-      this.setState({ queryOp: foundOp, queryUrl, queryPath: parts.path });
+      this.setState({ queryOp: foundOp, queryUrl, queryPath: parts.path, error: foundOp ? null: 'endpoint not exists in spec' });
     }
   };
 
@@ -179,8 +179,13 @@ export default class QuickCheckOperation extends Component {
     this.setState({ inputUrl: e.target.value });
   };
 
+  clearInputUrl = e => {
+    this.setState({inputUrl: '', queryOp: null, error: null});
+    this.domInput.focus();
+  }
+
   render() {
-    const { queryOp, queryUrl, queryPath } = this.state;
+    const { queryOp, queryUrl, queryPath, error } = this.state;
     return (
       <Container
         className="endpoint-query-container"
@@ -189,11 +194,13 @@ export default class QuickCheckOperation extends Component {
       >
         <strong>Quick check request url</strong>
         <textarea
+          ref={dom => this.domInput = dom}
           placeholder="paste your url"
           style={{ minHeight: "72px", border: "1px solid #eee" }}
           value={this.state.inputUrl}
           onChange={this.updateInputUrl}
         />
+        {error && <Message error>{error}</Message>}
         <Button
           color="purple"
           onClick={this.queryUrl}
@@ -201,7 +208,7 @@ export default class QuickCheckOperation extends Component {
         >
           Query & check
         </Button>
-        <Button color="grey" style={{ marginBottom: "1.5em" }}>
+        <Button color="grey" style={{ marginBottom: "1.5em" }} onClick={this.clearInputUrl}>
           Clear
         </Button>
         {queryOp && (

@@ -19,7 +19,8 @@ class App extends Component {
             SwaggerEditor({
               dom_id: "#swagger-editor",
               layout: "StandaloneLayout",
-              presets: [SwaggerEditorPresets.default]
+              presets: [SwaggerEditorPresets.default],
+              displayRequestDuration: true,
             });
           });
         }

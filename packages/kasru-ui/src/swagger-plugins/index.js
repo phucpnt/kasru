@@ -19,10 +19,13 @@ import swmb from "./state/swmb";
 import stub from "./state/stub";
 import test from "./state/test";
 import testSchedule from "./state/test-schedule";
+
 import wrapInfo from "./components/make-info-login-form";
 import wrapOperations from "./components/wrap-operation-views";
 import wrapOperationSummary from './components/wrap-operation-summary';
 import wrapHighlightCode from './components/wrap-highlight-code';
+import wrapLiveResponse from './components/wrap-live-repsonse';
+
 import QuickCheckOperation from './components/quick-check-operation';
 
 let StubEditor = makeEditor({
@@ -75,6 +78,7 @@ let StandaloneLayoutPlugin = function({ getSystem }) {
       operations: wrapOperations,
       OperationSummary: wrapOperationSummary,
       highlightCode: wrapHighlightCode,
+      liveResponse: wrapLiveResponse,
     },
     components: {
       StandaloneLayout,
