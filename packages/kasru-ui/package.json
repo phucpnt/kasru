@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "ajv": "^6.5.2",
+    "ajv": "^6.5.3",
     "date-fns": "^1.29.0",
     "immutable": "^3.8.2",
     "js-yaml": "^3.12.0",
     "loadjs": "^3.5.4",
     "localforage": "^1.7.2",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "promise-worker": "^1.1.1",
     "query-string": "^5.1.1",
     "react": "^15.6.2",
@@ -21,10 +21,10 @@
     "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.4",
     "react-sortable-hoc": "^0.8.3",
-    "semantic-ui-css": "^2.3.3",
+    "semantic-ui-css": "^2.4.0",
     "semantic-ui-react": "^0.81.3",
-    "swagger-client": "^3.8.13",
-    "swagger-editor": "^3.6.8",
+    "swagger-client": "^3.8.21",
+    "swagger-editor": "^3.6.11",
     "uri-js": "^4.2.2",
     "yaml-js": "0.2.3"
   },
@@ -37,6 +37,6 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "react-app-rewired": "^1.5.2"
+    "react-app-rewired": "^1.6.2"
   }
 }
