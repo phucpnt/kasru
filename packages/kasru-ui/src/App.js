@@ -15,11 +15,12 @@ class App extends Component {
       console.info('loaded.... google api');
       import(/* webpackChunkName: "swagger-editor" */ "swagger-editor").then(
         SwaggerEditor => {
-          import("./swagger-plugins").then(SwaggerEditorPresets => {
+          Promise.all([import("./swagger-plugins"), import("./mb-plugin")]).then(([SwaggerEditorPresets, MBPlugin]) => {
             SwaggerEditor({
               dom_id: "#swagger-editor",
               layout: "StandaloneLayout",
               presets: [SwaggerEditorPresets.default],
+              plugins: [MBPlugin.default],
               displayRequestDuration: true,
             });
           });

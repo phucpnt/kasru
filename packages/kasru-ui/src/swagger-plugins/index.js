@@ -19,6 +19,7 @@ import swmb from "./state/swmb";
 import stub from "./state/stub";
 import test from "./state/test";
 import testSchedule from "./state/test-schedule";
+import mbPlugin from '../mb-plugin';
 
 import wrapInfo from "./components/make-info-login-form";
 import wrapOperations from "./components/wrap-operation-views";
