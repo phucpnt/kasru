@@ -324,9 +324,7 @@ export default function definePlugin({ getSystem }) {
             if (specName) {
               const specContent = system.specSelectors.specStr();
               const stubContent = JSON.stringify(
-                system.stubSelectors
-                  .stubs()
-                  .map(stub => stub.remove("uniqueKey").remove("originIndex")),
+                system.stubSelectors.stubs(),
                 null,
                 2
               );

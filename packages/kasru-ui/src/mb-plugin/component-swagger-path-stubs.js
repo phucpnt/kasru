@@ -9,7 +9,7 @@ class SwaggerPathStubs extends Component {
 
   onStubRemove = index => {
     const { swaggerPath } = this.props;
-    this.props.stubActions.removeStub(index, swaggerPath);
+    this.props.stubActions.removeStub(swaggerPath, index);
   };
 
   onStubUpdate = (index, { predicates, responses }) => {
@@ -43,9 +43,11 @@ class SwaggerPathStubs extends Component {
 
   render() {
     const { swaggerPath } = this.props;
+    const stubs = this.props.stubSelectors.getStubsByPath(swaggerPath);
     return (
       <GroupSwaggerPathStubs
         swaggerPath={swaggerPath}
+        stubs = {stubs}
         active={this.state.isShown}
         onChange={this.onStubUpdate}
         onAddStub={this.addStubForPath}

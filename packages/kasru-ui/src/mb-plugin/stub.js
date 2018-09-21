@@ -1,4 +1,4 @@
-import { List, fromJS, Map, OrderedMap } from "immutable";
+import { List, fromJS, Map } from "immutable";
 import { API_HOST } from "../swagger-plugins/global-vars";
 
 const burstCache = () =>
@@ -6,10 +6,9 @@ const burstCache = () =>
     .toString()
     .slice(2);
 
-
 export default function getStubState({ getSystem }) {
   function reconstructStubsByPath(stubs) {
-    let stubsByPath = new OrderedMap();
+    let stubsByPath = new Map();
     const specJson = getSystem().specSelectors.specJson();
     specJson
       .get("paths")
@@ -108,28 +107,31 @@ export default function getStubState({ getSystem }) {
           }
         };
       },
-      removeStub(stubIndex) {
+      removeStub(swaggerPath, stubIndex) {
         return system => {
-          system.stubActions.removeStub_state(stubIndex);
+          system.stubActions.removeStub_state(swaggerPath, stubIndex);
           system.swmbActions.persist();
         };
       },
-      removeStub_state(stubIndex) {
+      removeStub_state(swaggerPath, stubIndex) {
         return {
           type: "SWMB/STUB/REMOVE",
-          payload: { stubIndex }
+          payload: { stubIndex, swaggerPath }
         };
       },
-      updateStub(index, { predicates, responses }) {
+      updateStub(swaggerPath, index, { predicates, responses }) {
         return system => {
-          system.stubActions.updateStub_state(index, { predicates, responses });
+          system.stubActions.updateStub_state(swaggerPath, index, {
+            predicates,
+            responses
+          });
           system.swmbActions.persist();
         };
       },
-      updateStub_state(index, { predicates, responses }) {
+      updateStub_state(swaggerPath, index, { predicates, responses }) {
         return {
           type: "SWMB/STUB/UPDATE",
-          payload: { stubIndex: index, predicates, responses }
+          payload: { stubIndex: index, predicates, responses, swaggerPath }
         };
       },
       changeOrder(swaggerPath, stubIndex, direction) {
@@ -152,18 +154,11 @@ export default function getStubState({ getSystem }) {
     reducers: {
       "SWMB/STUB/FETCH_SUCCESS": (state, action) => {
         let stubs = fromJS(JSON.parse(action.payload.stub));
-        stubs = stubs.map((stub, index) =>
-          stub.set("originIndex", index).set(
-            "uniqueKey",
-            Math.random()
-              .toString()
-              .slice(2)
-          )
-        );
-        const stubsByPath = reconstructStubsByPath(stubs);
-        const nuState = state
-          .set("stubs", stubs)
-          .set("stubsByPath", stubsByPath);
+        if (List.isList(stubs)) {
+          stubs = new Map();
+        }
+        const stubsByPath = stubs;
+        const nuState = state.set("stubsByPath", stubsByPath);
         return nuState;
       },
       "SWMB/STUB/UPDATE_JSON_SPEC": (state, action) => {
@@ -176,53 +171,37 @@ export default function getStubState({ getSystem }) {
         return state.set("stubsByPath", stubs);
       },
       "SWMB/STUB/REMOVE": (state, action) => {
-        const { stubIndex } = action.payload;
-        const stubs = state
-          .get("stubs")
-          .remove(stubIndex)
-          .map((stub, index) => stub.set("originIndex", index));
-
-        return state
-          .set("stubs", stubs)
-          .set("stubsByPath", reconstructStubsByPath(stubs));
+        const { stubIndex, swaggerPath } = action.payload;
+        return state.updateIn(["stubsByPath", swaggerPath], stubs =>
+          stubs.remove(stubIndex)
+        );
       },
       "SWMB/STUB/ADD": (state, action) => {
         const { swaggerPath, predicates, responses } = action.payload;
-        let stubs = state.get("stubs");
-
         let stub = fromJS({
-          originIndex: stubs.size,
           uniqueKey: Date.now().toString(),
-          "x-swagger-path": swaggerPath,
           predicates,
           responses
         });
 
-        stubs = stubs.push(stub);
-        return state.set("stubs", stubs).update("stubsByPath", sbp => {
-          return sbp.update(swaggerPath, ss => ss.push(stub));
-        });
+        return state.updateIn(["stubsByPath", swaggerPath], ss =>
+          (ss || List()).push(stub)
+        );
       },
       "SWMB/STUB/UPDATE": (state, action) => {
-        const { stubIndex, predicates, responses } = action.payload;
-        const cStub = state.get("stubs").get(stubIndex);
-        return state
-          .updateIn(["stubs", stubIndex], stub =>
+        const {
+          stubIndex,
+          predicates,
+          responses,
+          swaggerPath
+        } = action.payload;
+        return state.updateIn(["stubsByPath"], stubs => {
+          return stubs.updateIn([swaggerPath, stubIndex], stub =>
             stub
               .set("predicates", fromJS(predicates))
               .set("responses", fromJS(responses))
-          )
-          .updateIn(["stubsByPath"], stubs => {
-            const ss = stubs.get(cStub.get("x-swagger-path"));
-            const gIndex = ss.findIndex(
-              s => s.get("originIndex") === stubIndex
-            );
-            return stubs.updateIn([cStub.get("x-swagger-path"), gIndex], stub =>
-              stub
-                .set("predicates", fromJS(predicates))
-                .set("responses", fromJS(responses))
-            );
-          });
+          );
+        });
       },
       "SWMB/STUB/GENERATE_SUCCESS": (state, action) => {
         const { stubIndex, swaggerPath, responses } = action.payload;
@@ -281,10 +260,10 @@ export default function getStubState({ getSystem }) {
         return state.get("stubs").get(stubIndex);
       },
       stubs: state => {
-        return state.get("stubs", new List());
+        return state.get("stubsByPath", new Map());
       },
-      stubsByPath: state => {
-        return state.get("stubsByPath");
+      getStubsByPath: (state, path) => {
+        return state.get("stubsByPath").get(path, List());
       }
     }
   };

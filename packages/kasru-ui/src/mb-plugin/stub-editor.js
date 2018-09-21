@@ -22,95 +22,6 @@ import JsonEditor from "../swagger-plugins/components/json-editor";
 
 const NOOP = Function.prototype; // Apparently the best way to no-op
 
-export default function makeEditor() {
-  class StubEditor extends Component {
-    static propTypes = {
-      specId: PropTypes.string,
-      value: PropTypes.string,
-      onChange: PropTypes.func
-    };
-
-    static defaultProps = {
-      value: "",
-      specId: "--unknown--",
-      onChange: NOOP
-    };
-    constructor(props, context) {
-      super(props, context);
-      this.state = {
-        focusPaths: {}
-      };
-      this.debouncedOnChange = debounce(this.onChange, props.debounce);
-    }
-
-    onChange = value => {
-      // Send it upstream ( this.silent is taken from react-ace module). It avoids firing onChange, when we update setValue
-      this.props.onChange(value);
-    };
-
-    onStubRemove = index => {
-      this.props.stubActions.removeStub(index);
-    };
-
-    onStubUpdate = (index, { predicates, responses }) => {
-      this.props.stubActions.updateStub(index, { predicates, responses });
-    };
-
-    addStubForPath(swaggerPath, { predicates = [], responses = [] }) {
-      this.props.stubActions.addStub(swaggerPath, { predicates, responses });
-    }
-
-    onGenerateStub = (swaggerPath, index) => {
-      this.props.stubActions.generateStub(swaggerPath, index);
-    };
-
-    togglePathStubs(swaggerPath) {
-      this.setState({
-        focusPaths: Object.assign({}, this.state.focusPaths, {
-          [swaggerPath]: !this.state.focusPaths[swaggerPath]
-        })
-      });
-    }
-
-    onChangeStubOrder(swaggerPath, stubIndex, direction) {
-      this.props.stubActions.changeOrder(swaggerPath, stubIndex, direction);
-    }
-
-    render() {
-      const { stubs, focusPaths } = this.state;
-      const { stubSelectors } = this.props;
-
-      const groupedStubs = stubSelectors.stubsByPath();
-
-      return (
-        <Container fluid className={"stub-editor-container-wrapper"}>
-          {groupedStubs.map((stubList, swaggerPath) => {
-            return (
-              <GroupSwaggerPathStubs
-                swaggerPath={swaggerPath}
-                active={focusPaths[swaggerPath]}
-                stubs={stubList}
-                key={swaggerPath}
-                onChange={this.onStubUpdate}
-                onAddStub={this.addStubForPath.bind(this, swaggerPath)}
-                onClickTitle={this.togglePathStubs.bind(this, swaggerPath)}
-                onRemoveStub={this.onStubRemove}
-                onGenerateStub={this.onGenerateStub}
-                onChangeStubOrder={this.onChangeStubOrder.bind(
-                  this,
-                  swaggerPath
-                )}
-              />
-            );
-          })}
-        </Container>
-      );
-    }
-  }
-
-  return StubEditor;
-}
-
 export class GroupSwaggerPathStubs extends Component {
 
   static defaultProps = {
@@ -193,11 +104,11 @@ export class GroupSwaggerPathStubs extends Component {
                     return (
                       <Menu.Item
                         key={stubIndex}
-                        name={index}
+                        name={index + ""}
                         onClick={this.selectStub}
                         active={selectedStubIndex === index}
                       >
-                        #{stub.get("originIndex")}
+                        #{index}
                       </Menu.Item>
                     );
                   })}
@@ -223,25 +134,25 @@ export class GroupSwaggerPathStubs extends Component {
                   <UnitStubEditor
                     predicates={focusStub.get("predicates")}
                     responses={focusStub.get("responses")}
-                    specIndex={focusStub.get("originIndex")}
+                    specIndex={selectedStubIndex}
                     key={focusStub.get("uniqueKey")}
                     onClone={this.props.onAddStub}
                     onUpdate={this.props.onChange.bind(
                       this,
-                      focusStub.get("originIndex")
+                      selectedStubIndex
                     )}
                     onRemove={this.onRemove.bind(
                       this,
-                      focusStub.get("originIndex")
+                      selectedStubIndex
                     )}
                     onGenerateStub={this.props.onGenerateStub.bind(
                       null,
                       swaggerPath,
-                      focusStub.get("originIndex")
+                      selectedStubIndex
                     )}
                     onOrderChange={this.onChangeOrder.bind(
                       this,
-                      focusStub.get("originIndex")
+                      selectedStubIndex
                     )}
                   />
                 )}
