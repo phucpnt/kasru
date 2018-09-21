@@ -455,9 +455,10 @@ route.post("/:specName/generate-mock-responses", (req, res) => {
   ])
     .then(result => result.spec)
     .then($ref => {
+      console.info($ref);
       const responseManager = api.responseManager;
       const referencedTemplate = api.constructTemplateForRef(
-        $ref.schema,
+        $ref.content['application/json'].schema,
         "property"
       );
       let populatedTemplate = responseManager.populateTemplate(

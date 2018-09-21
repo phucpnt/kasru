@@ -147,7 +147,6 @@ export class GroupSwaggerPathStubs extends Component {
                     )}
                     onGenerateStub={this.props.onGenerateStub.bind(
                       null,
-                      swaggerPath,
                       selectedStubIndex
                     )}
                     onOrderChange={this.onChangeOrder.bind(

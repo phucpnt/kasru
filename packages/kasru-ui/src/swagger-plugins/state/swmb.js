@@ -389,13 +389,13 @@ export default function definePlugin({ getSystem }) {
           return system => {
             const [cs, resourceId] = specName.split(":");
             const specContent = system.specSelectors.specStr();
-            const stubContent = "[]";
+            const stubContent = system.stubSelectors.stubs();
             const testCasesContent = "[]";
 
             if (cs === "gdrive") {
               uploadToGDrive(resourceId, {
                 spec: specContent,
-                stub: [],
+                stub: stubContent.toJS(),
                 test: []
               }).then(result => {
                 console.info(result);

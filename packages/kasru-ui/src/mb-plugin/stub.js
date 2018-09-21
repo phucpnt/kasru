@@ -205,18 +205,11 @@ export default function getStubState({ getSystem }) {
       },
       "SWMB/STUB/GENERATE_SUCCESS": (state, action) => {
         const { stubIndex, swaggerPath, responses } = action.payload;
-        const stub = state
-          .get("stubs")
-          .get(stubIndex)
-          .set("responses", fromJS(responses))
-          .set("uniqueKey", Date.now().toString());
         return state
-          .updateIn(["stubs"], stubs => stubs.set(stubIndex, stub))
-          .updateIn(["stubsByPath", swaggerPath], stubs => {
-            const index = stubs.findIndex(
-              stub => stub.get("originIndex") === stubIndex
-            );
-            return stubs.set(index, stub);
+          .updateIn(["stubsByPath", swaggerPath, stubIndex], stub => {
+            return stub
+              .set("responses", fromJS(responses))
+              .set("uniqueKey", Date.now().toString());
           });
       },
       "SWMB/STUB/CHANGE_ORDER": (state, action) => {
