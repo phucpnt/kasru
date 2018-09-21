@@ -148,7 +148,7 @@ export function createSimpleMatchTest(endpointUrl) {
     placeholderId.push(matched[1]);
   }
   const patternUrl = endpointUrl.replace(placeholderPatt, "([^\\/]+)");
-  const finRegex = RegExp(patternUrl);
+  const finRegex = RegExp(patternUrl+'$');
   return {
     regex: finRegex,
     pickInPathVar: urn => {

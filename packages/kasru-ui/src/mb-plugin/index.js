@@ -1,10 +1,24 @@
-import wrapOperationSummary from './wrap-operation-summary';
+import wrapOperationSummary from "./wrap-operation-summary";
+import SwaggerPathStubs from "./component-swagger-path-stubs";
 
-const plugins = {};
+import createStateStub from "./stub";
 
-plugins.wrapComponents = {
-  OperationSummary: wrapOperationSummary,
+function createMBPlugin({ getSystem }) {
+  const plugin = {};
+
+  plugin.wrapComponents = {
+    OperationSummary: wrapOperationSummary
+  };
+
+  plugin.components = {
+    SwaggerPathStubs
+  };
+
+  plugin.statePlugins = {
+    stub: createStateStub({ getSystem })
+  };
+
+  return plugin;
 }
 
-
-export default plugins;
+export default createMBPlugin;
