@@ -85,6 +85,7 @@ export default function getStubState({ getSystem }) {
                 swaggerPath,
                 stubIndex,
                 responses: result.data.responses,
+                predicates: result.data.predicates,
                 responsePath: result.data.responsePath
               });
               system.swmbActions.persist();
@@ -95,6 +96,7 @@ export default function getStubState({ getSystem }) {
         swaggerPath,
         stubIndex,
         responses,
+        predicates,
         responsePath
       }) {
         return {
@@ -103,6 +105,7 @@ export default function getStubState({ getSystem }) {
             swaggerPath,
             stubIndex,
             responses,
+            predicates,
             responsePath
           }
         };
@@ -204,11 +207,12 @@ export default function getStubState({ getSystem }) {
         });
       },
       "SWMB/STUB/GENERATE_SUCCESS": (state, action) => {
-        const { stubIndex, swaggerPath, responses } = action.payload;
+        const { stubIndex, swaggerPath, responses, predicates } = action.payload;
         return state
           .updateIn(["stubsByPath", swaggerPath, stubIndex], stub => {
             return stub
               .set("responses", fromJS(responses))
+              .set("predicates", fromJS(predicates))
               .set("uniqueKey", Date.now().toString());
           });
       },

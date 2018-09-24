@@ -10,6 +10,8 @@ const max = require("lodash/max");
 const Swagger = require("swagger-client");
 const shortid = require("shortid");
 const fetch = require("unfetch");
+const jsf = require("json-schema-faker");
+const { RegExifyURL } = require("./util/urlManager");
 
 const SwaggerBank = require("swaggerbank");
 const mountebankHelper = require("mountebank-helper");
@@ -72,11 +74,11 @@ route.get("/register-session", (req, res) => {
 route.get("/:specName", (req, res) => {
   const specName = req.params.specName;
 
-  if(specName.indexOf('gist:') === 0){
+  if (specName.indexOf("gist:") === 0) {
     res.json({
       content: null,
       stub: null,
-      message: 'gist spec. spec content will be queried by APP via CORS',
+      message: "gist spec. spec content will be queried by APP via CORS"
     });
     res.end();
     return;
@@ -444,48 +446,47 @@ route.post("/:specName/generate-mock-responses", (req, res) => {
     specObj = YAML.load(fs.readFileSync(specPath, { encoding: "utf8" }));
   }
   const { route, verb, status } = req.body.responsePath;
-  const api = new SwaggerBank.API(path.normalize(specPath));
 
   Swagger.resolveSubtree(specObj, [
     "paths",
     route,
-    verb,
-    "responses",
-    status.toString()
+    verb
+    // "responses",
+    // status.toString()
   ])
     .then(result => result.spec)
     .then($ref => {
-      console.info($ref);
-      const responseManager = api.responseManager;
-      const referencedTemplate = api.constructTemplateForRef(
-        $ref.content['application/json'].schema,
-        "property"
-      );
-      let populatedTemplate = responseManager.populateTemplate(
-        referencedTemplate
-      );
-      const cr = responseManager.constructCompleteResponse({
-        uri: "",
-        method: verb,
-        statusCode: status,
-        populatedTemplate,
-        extras: {
-          "x-swagger-path": route
-        }
+      const regexUri = RegExifyURL(route, $ref.parameters);
+      jsf.option({
+        alwaysFakeOptionals: true
       });
-
+      return Promise.all([
+        regexUri,
+        jsf.resolve($ref.responses[status].content["application/json"].schema)
+      ]);
+    })
+    .then(([regexUri, sampleData]) => {
       const stubResponses = [
         {
           is: {
-            statusCode: cr.res.statusCode,
-            headers: cr.res.responseHeaders,
-            body: JSON.parse(cr.res.responseBody)
+            statusCode: status,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "x-swagger-path": route
+            },
+            body: sampleData
           }
         }
       ];
 
       res.json({
         data: {
+          predicates: [
+            {
+              matches: { path: regexUri, method: verb },
+            }
+          ],
           responses: stubResponses,
           responsePath: { route, verb, status }
         }
